@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d0b16">
+<meta name="description" content="Crisálida — Ecos de Vharune: um RPG de captura de criaturas que roda direto no navegador.">
+<title>CRISÁLIDA — Ecos de Vharune</title>
+<link rel="stylesheet" href="css/estilo.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><polygon points='16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5' fill='%23e8a33d' stroke='%231c1730' stroke-width='2.4' stroke-linejoin='round'/><path d='M16 9.5v13M12.6 13.2a4.2 4.2 0 0 1 6.8 0M12.6 18.8a4.2 4.2 0 0 0 6.8 0' stroke='%231c1730' stroke-width='2' fill='none' stroke-linecap='round'/></svg>">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============================ TÍTULO ============================ -->
+  <section id="tela-titulo" class="tela ativa">
+    <div class="titulo-fundo"><canvas id="canvas-titulo"></canvas></div>
+    <div class="titulo-conteudo">
+      <h1 class="logo">
+        <span class="logo-marca">CRISÁLIDA</span>
+        <span class="logo-sub">Ecos de Vharune</span>
+      </h1>
+      <p class="titulo-lead">
+        Trezentos anos depois da Fratura, o Véu ainda escorre luz viva.<br>
+        Você é um <strong>Vinculista</strong>. Encontre os Ânimos. Cuide deles. Descubra o que rasgou o céu.
+      </p>
+      <div class="titulo-botoes">
+        <button class="btn btn-primario" id="btn-novo">Novo vínculo</button>
+        <button class="btn" id="btn-continuar" disabled>Continuar</button>
+      </div>
+      <p class="titulo-nota" id="nota-save"></p>
+      <p class="titulo-credito">v<span id="versao"></span> · 28 espécies · 11 aspectos do éter · roda 100% offline</p>
+    </div>
+  </section>
+
+  <!-- ============================ INTRODUÇÃO ======================== -->
+  <section id="tela-intro" class="tela">
+    <div class="intro-caixa">
+      <div class="intro-selo" id="intro-selo"></div>
+      <p class="intro-texto" id="intro-texto"></p>
+      <div class="intro-acoes">
+        <button class="btn btn-fantasma" id="btn-pular">Pular</button>
+        <button class="btn btn-primario" id="btn-intro-seguir">Continuar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ ESCOLHA =========================== -->
+  <section id="tela-escolha" class="tela">
+    <div class="escolha-cabeca">
+      <h2>Três Ânimos aguardam no ateliê</h2>
+      <p>“Não escolha o mais forte. Escolha aquele que você vai querer alimentar todo dia.” — Mestra Oriel</p>
+    </div>
+    <div class="escolha-grade" id="escolha-grade"></div>
+    <div class="escolha-rodape">
+      <label class="campo">
+        <span>Seu nome de vinculista</span>
+        <input type="text" id="campo-nome" maxlength="14" placeholder="Vinculista" autocomplete="off">
+      </label>
+      <button class="btn btn-primario" id="btn-comecar" disabled>Firmar o vínculo</button>
+    </div>
+  </section>
+
+  <!-- ============================== JOGO ============================ -->
+  <section id="tela-jogo" class="tela">
+    <header id="hud">
+      <div class="hud-esq">
+        <span class="hud-local" id="hud-local">—</span>
+        <span class="hud-coord" id="hud-coord"></span>
+      </div>
+      <div class="hud-dir">
+        <span class="hud-moeda" title="Ambras"><i class="moeda"></i><b id="hud-ambras">0</b></span>
+        <button class="btn-icone" id="btn-menu" title="Menu (M)">☰</button>
+      </div>
+    </header>
+
+    <div id="palco">
+      <canvas id="canvas-mapa"></canvas>
+      <div id="fila-equipe" class="fila-equipe"></div>
+    </div>
+
+    <div id="controles">
+      <div class="dpad" id="dpad">
+        <button class="dp dp-cima" data-dir="cima" aria-label="Cima"></button>
+        <button class="dp dp-esq" data-dir="esquerda" aria-label="Esquerda"></button>
+        <button class="dp dp-dir" data-dir="direita" aria-label="Direita"></button>
+        <button class="dp dp-baixo" data-dir="baixo" aria-label="Baixo"></button>
+        <span class="dp-centro"></span>
+      </div>
+      <div class="acoes">
+        <button class="botao-a" id="btn-acao">A</button>
+        <button class="botao-b" id="btn-b">MENU</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ DIÁLOGO =========================== -->
+  <div id="caixa-dialogo" class="oculto">
+    <div class="dialogo-painel">
+      <div class="dialogo-quem" id="dialogo-quem"></div>
+      <p class="dialogo-texto" id="dialogo-texto"></p>
+      <div class="dialogo-seta">▼</div>
+    </div>
+  </div>
+
+  <!-- ============================= PAINEL =========================== -->
+  <div id="painel" class="oculto">
+    <div class="painel-caixa">
+      <header class="painel-topo">
+        <h2 id="painel-titulo">—</h2>
+        <button class="btn-icone" id="painel-fechar" aria-label="Fechar">✕</button>
+      </header>
+      <div class="painel-abas" id="painel-abas"></div>
+      <div class="painel-corpo" id="painel-corpo"></div>
+      <footer class="painel-rodape" id="painel-rodape"></footer>
+    </div>
+  </div>
+
+  <!-- ============================ BATALHA =========================== -->
+  <div id="batalha" class="oculto">
+    <div class="bt-cena" id="bt-cena">
+      <canvas id="canvas-batalha"></canvas>
+
+      <div class="bt-placa bt-inimigo" id="bt-placa-inimigo">
+        <div class="bt-linha1">
+          <span class="bt-nome" id="bti-nome">—</span>
+          <span class="bt-nivel" id="bti-nivel">Nv 1</span>
+        </div>
+        <div class="barra"><i id="bti-barra"></i></div>
+        <div class="bt-tags" id="bti-tags"></div>
+      </div>
+
+      <div class="bt-placa bt-aliado" id="bt-placa-aliado">
+        <div class="bt-linha1">
+          <span class="bt-nome" id="bta-nome">—</span>
+          <span class="bt-nivel" id="bta-nivel">Nv 1</span>
+        </div>
+        <div class="barra"><i id="bta-barra"></i></div>
+        <div class="bt-hpnum"><span id="bta-hp">0/0</span></div>
+        <div class="barra barra-xp"><i id="bta-xp"></i></div>
+        <div class="bt-tags" id="bta-tags"></div>
+      </div>
+    </div>
+
+    <div class="bt-base">
+      <div class="bt-log" id="bt-log">…</div>
+      <div class="bt-menu" id="bt-menu"></div>
+    </div>
+  </div>
+
+  <!-- ============================ AVISOS ============================ -->
+  <div id="toasts"></div>
+  <div id="carregando" class="oculto"><div class="giro"></div></div>
+</div>
+
+<!-- ================================ SCRIPTS ============================= -->
+<script src="js/core.js"></script>
+<script src="js/data/tipos.js"></script>
+<script src="js/data/tecnicas.js"></script>
+<script src="js/data/especies.js"></script>
+<script src="js/data/itens.js"></script>
+<script src="js/data/mundo.js"></script>
+<script src="js/arte/criaturas.js"></script>
+<script src="js/arte/mapa.js"></script>
+<script src="js/arte/personagens.js"></script>
+<script src="js/motor/criatura.js"></script>
+<script src="js/motor/batalha.js"></script>
+<script src="js/motor/estado.js"></script>
+<script src="js/jogo/mundo.js"></script>
+<script src="js/ui/nucleo.js"></script>
+<script src="js/ui/telas.js"></script>
+<script src="js/ui/batalha.js"></script>
+<script src="js/web3/carteira.js"></script>
+<script src="js/jogo/principal.js"></script>
+</body>
+</html>

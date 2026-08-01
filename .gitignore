@@ -1,0 +1,31 @@
+# Dependências (o jogo não tem nenhuma; isto é para quem for testar os contratos)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Artefatos de compilação de contratos
+artifacts/
+cache/
+out/
+typechain-types/
+broadcast/
+
+# Ambiente e segredos — NUNCA versionar chave de assinante ou de implantação
+.env
+.env.*
+*.key
+*.pem
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Saídas locais de teste
+/tmp/
+*.log
+
+# Configuração local de ferramenta (não faz parte do projeto)
+.claude/
