@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =========================================================================
-   economia/simulador.js — Simula a economia de Crisálida fora da cadeia.
+   economia/simulador.js — Simula a economia de Ânimos fora da cadeia.
 
    Roda ciclos de Orva com uma população de jogadores e mede se a economia
    fica estável, inflaciona ou deflaciona. Serve para calibrar os números de
@@ -24,13 +24,13 @@ const M = require('./modelo.js');
 /* ---------- carrega as espécies do jogo (sem DOM, sem navegador) -------- */
 function carregarEspecies() {
   const caixa = { window: {}, console };
-  caixa.window.CRISALIDA = {};
+  caixa.window.ANIMOS = {};
   caixa.globalThis = caixa;
   vm.createContext(caixa);
   ['js/core.js', 'js/data/tipos.js', 'js/data/tecnicas.js', 'js/data/especies.js'].forEach(f => {
     vm.runInContext(fs.readFileSync(path.join(RAIZ, f), 'utf8'), caixa, { filename: f });
   });
-  return caixa.window.CRISALIDA.LISTA_ESPECIES.map(e => ({
+  return caixa.window.ANIMOS.LISTA_ESPECIES.map(e => ({
     id: e.id, nome: e.nome, cap: e.cap, num: e.num
   }));
 }
@@ -232,7 +232,7 @@ const fmt = n => {
 };
 
 console.log('\n╔══════════════════════════════════════════════════════════════════════════╗');
-console.log('║  CRISÁLIDA — simulação econômica (fora da cadeia, nada implantado)      ║');
+console.log('║  ÂNIMOS — simulação econômica (fora da cadeia, nada implantado)      ║');
 console.log('╚══════════════════════════════════════════════════════════════════════════╝');
 console.log(`\nJogadores: ${N_JOGADORES.toLocaleString('pt-BR')}   Ciclos de Orva: ${N_CICLOS}   (~${(N_CICLOS * 29.5 / 365).toFixed(1)} anos)`);
 console.log(`Custo médio de um cuidado: ${CUSTO_MEDIO_CUIDADO.toFixed(2)} ETR\n`);

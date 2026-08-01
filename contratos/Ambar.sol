@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 /*
-  Ambar (AMB) — a moeda dura de Crisálida.
+  Ambar (AMB) — a moeda dura de Ânimos.
 
   ESPECIFICAÇÃO. NÃO IMPLANTADO. NÃO AUDITADO.
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 /*
-  Tesouraria — o cofre de Crisálida.
+  Tesouraria — o cofre de Ânimos.
 
   ESPECIFICAÇÃO. NÃO IMPLANTADO. NÃO AUDITADO.
 

@@ -1,4 +1,4 @@
-# Contratos de Crisálida
+# Contratos de Ânimos
 
 > **Nada aqui está implantado, compilado, auditado ou conectado ao jogo.**
 > São contratos de **referência**, escritos junto com `../docs/ECONOMIA.md`.

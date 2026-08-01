@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 /*
-  Eter (ETR) — a moeda de giro de Crisálida.
+  Eter (ETR) — a moeda de giro de Ânimos.
 
   ESPECIFICAÇÃO. NÃO IMPLANTADO. NÃO AUDITADO.
 

@@ -1,4 +1,4 @@
-# CRISÁLIDA — Fundação econômica play-to-earn
+# ÂNIMOS — Fundação econômica play-to-earn
 
 > **Estado: especificação. Nada aqui está implantado, conectado ao jogo ou vivo.**
 > O jogo em `js/` não lê uma linha deste diretório. Isso é intencional: a economia
@@ -10,7 +10,7 @@
 
 **O jogo tem que ser bom sem token nenhum.**
 
-Se a única razão para jogar Crisálida for extrair valor, a economia morre — e leva o
+Se a única razão para jogar Ânimos for extrair valor, a economia morre — e leva o
 jogo junto. Isso não é opinião moral, é mecânica: uma economia sustentada só por
 entrada de capital novo precisa de entrada de capital novo para sempre. Quando ela
 para, o preço cai, quem jogava por dinheiro sai, o preço cai mais. Foi assim em
@@ -30,7 +30,7 @@ fantasia central *e* o controle de oferta. Não é coincidência — é o desenh
 ## 1. A lore é a política monetária
 
 Trezentos anos atrás a lua **Orva** se partiu. Pela fenda escorre o éter cru que o
-Véu segurava, e é dele que os Ânimos nascem. Eles não existem "no mundo": eles
+Crisálida derrama, e é dele que os Ânimos nascem. Eles não existem "no mundo": eles
 **descem de Orva**, em ciclos.
 
 Isso não é enfeite. É o mecanismo:
@@ -66,7 +66,7 @@ o jogador novo de comprar uma poção.
 ### ÂMBAR (AMB) — a moeda dura
 
 - **100.000.000, cunhados uma única vez na gênese. Nunca mais.**
-- Usado no que é permanente: Selo do Véu, batismo, rebatismo, taxa de mercado.
+- Usado no que é permanente: Selo da Crisálida, batismo, rebatismo, taxa de mercado.
 - Só entra em circulação por conquista (primeira captura de espécie, marcos de
   bestiário, ranking de cuidado) e volta por queima.
 
@@ -177,7 +177,7 @@ em gás.
 | Selo Reforçado | ETR | 40 | 100% | Idem, para quem quer menos tentativas |
 | Selo do Lago / da Brasa | ETR | 80 | 85% | Especialização por tipo |
 | Selo Áureo | ETR | 120 | 70% | Alto valor, parte financia o tesouro |
-| Selo do Véu | AMB | 25 | 60% | Único capaz de lendário — em moeda dura |
+| Selo da Crisálida | AMB | 25 | 60% | Único capaz de lendário — em moeda dura |
 | Elixires e alimentos | ETR | 4–95 | 100% | Consumo recorrente do cuidado |
 | Cura no Santuário | ETR | 6 | 100% | Sumidouro de alta frequência e valor baixo |
 | **Batismo** | AMB | 5 | 50% | Cobra pelo registro permanente |
@@ -337,7 +337,7 @@ Escrito antes de implantar, porque depois vira desculpa.
 2. **Fazenda de bots.** Bot não se diverte, mas ganha igual. *Mitigação:* teto por
    carteira, recompensa por cuidado contínuo (caro de simular), voucher assinado.
 3. **Concentração de lendários.** 21 unidades é pouco o bastante para alguém
-   comprar todos. *Mitigação:* Selo do Véu em moeda dura, teto por carteira por
+   comprar todos. *Mitigação:* Selo da Crisálida em moeda dura, teto por carteira por
    ciclo, e a janela de 1-em-12 ciclos que espalha a distribuição no tempo.
 4. **Gás inviabilizar o dia a dia.** *Mitigação:* rede L2, sincronia preguiçosa de
    cuidado, ERC-1155 em lote.
@@ -386,7 +386,7 @@ em rede principal — não depois.
 | **7** | Rede principal | ⬜ |
 
 **O jogo não depende de nenhuma fase acima da 0.** Se as fases 2 a 7 nunca
-acontecerem, Crisálida continua sendo um jogo completo — e é assim que tem que ser.
+acontecerem, Ânimos continua sendo um jogo completo — e é assim que tem que ser.
 
 ---
 

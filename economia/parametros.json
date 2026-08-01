@@ -1,6 +1,6 @@
 {
   "$comentario": [
-    "CRISÁLIDA — parâmetros da economia play-to-earn.",
+    "ÂNIMOS — parâmetros da economia play-to-earn.",
     "ESTE ARQUIVO É ESPECIFICAÇÃO, NÃO CONFIGURAÇÃO ATIVA.",
     "O jogo em js/ NÃO lê este arquivo. Nada aqui está implantado.",
     "Todo número é ponto de partida para balanceamento, não valor final."
@@ -86,7 +86,7 @@
       "selo_do_lago":   { "moeda": "ETR", "custo": 80,  "queima": 0.85, "tesouraria": 0.15 },
       "selo_da_brasa":  { "moeda": "ETR", "custo": 80,  "queima": 0.85, "tesouraria": 0.15 },
       "selo_aureo":     { "moeda": "ETR", "custo": 120, "queima": 0.70, "tesouraria": 0.30 },
-      "selo_do_veu":    { "moeda": "AMB", "custo": 25,  "queima": 0.60, "tesouraria": 0.40 }
+      "selo_da_crisalida":    { "moeda": "AMB", "custo": 25,  "queima": 0.60, "tesouraria": 0.40 }
     },
     "insumos": {
       "elixir_menor":      { "moeda": "ETR", "custo": 8,  "queima": 1.00, "tesouraria": 0.00 },

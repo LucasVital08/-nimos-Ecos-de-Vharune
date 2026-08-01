@@ -1,18 +1,18 @@
 /* =========================================================================
-   economia/modelo.js — As fórmulas da economia de Crisálida, em JS puro.
+   economia/modelo.js — As fórmulas da economia de Ânimos, em JS puro.
 
    ESTE ARQUIVO NÃO É CARREGADO PELO JOGO. Ele existe para (a) simular o
    balanceamento fora da cadeia e (b) servir de referência executável para a
    implementação em Solidity. Nenhuma função aqui toca em rede, carteira,
    localStorage ou DOM.
 
-   Roda em Node (module.exports) e no navegador (window.CrisalidaEconomia).
+   Roda em Node (module.exports) e no navegador (window.AnimosEconomia).
    ========================================================================= */
 (function (raiz, fabrica) {
   'use strict';
   var api = fabrica();
   if (typeof module === 'object' && module.exports) module.exports = api;
-  else raiz.CrisalidaEconomia = api;
+  else raiz.AnimosEconomia = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 

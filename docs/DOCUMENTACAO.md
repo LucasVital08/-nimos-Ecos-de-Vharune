@@ -1,18 +1,21 @@
-# Crisálida por dentro — aula completa
+# Documentação técnica — Ânimos: Ecos de Vharune
 
-Este documento ensina o código que você tem em mãos: como o jogo está montado,
-por que cada decisão foi tomada, e o desenho Web3 inteiro.
+Documentação completa do projeto: como o jogo está montado, por que cada decisão
+foi tomada, e o desenho Web3 inteiro.
 
-**A Parte I assume que você não conhece o código do jogo.**
-**A Parte II assume que você conhece Web3** — nela eu não explico o que é um
-ERC-721; explico por que *estes* contratos são assim, onde estão os trade-offs e
-o que eu atacaria se quisesse quebrá-los.
+**A Parte I documenta o jogo do zero**, sem assumir familiaridade com o código.
+**A Parte II documenta a camada Web3 em nível técnico** — não explica o que é um
+ERC-721; explica por que *estes* contratos são assim, onde estão os trade-offs e
+quais são os vetores de ataque conhecidos.
 
 Leia com o repositório aberto do lado. Todo trecho citado tem o arquivo e a linha.
 
+Para a história e o mundo, veja [HISTORIA.md](HISTORIA.md).
+Para a economia, veja [ECONOMIA.md](ECONOMIA.md).
+
 ---
 
-# Índice
+## Índice
 
 **Parte I — O jogo**
 1. [A arquitetura em uma página](#1-a-arquitetura-em-uma-página)
@@ -35,10 +38,10 @@ Leia com o repositório aberto do lado. Todo trecho citado tem o arquivo e a lin
 16. [O voucher EIP-712 e o modelo de confiança](#16-o-voucher-eip-712-e-o-modelo-de-confiança)
 17. [O batismo e o espaço de nomes](#17-o-batismo-e-o-espaço-de-nomes)
 18. [Superfície de ataque](#18-superfície-de-ataque)
-19. [Dois bugs reais deste repositório](#19-dois-bugs-reais-deste-repositório)
+19. [Dois bugs corrigidos e por que importam](#19-dois-bugs-corrigidos-e-por-que-importam)
 20. [O que falta](#20-o-que-falta)
 
-**Parte III** — [Exercícios](#parte-iii--exercícios)
+**Parte III** — [Exercícios de fixação](#parte-iii--exercícios-de-fixação)
 
 ---
 ---
@@ -902,9 +905,9 @@ primeiro.
 
 ---
 
-## 19. Dois bugs reais deste repositório
+## 19. Dois bugs corrigidos e por que importam
 
-Encontrados relendo os contratos para escrever esta aula. Ambos já corrigidos, e
+Encontrados em revisão dos contratos. Ambos já corrigidos, e
 os dois são de classes que valem reconhecer.
 
 ### Bug 1 — hash errado libera o nome antigo
@@ -993,9 +996,10 @@ Fora da minha competência, e com consequência real:
 ---
 ---
 
-# PARTE III — Exercícios
+# PARTE III — Exercícios de fixação
 
-Do mais fácil ao mais difícil. Todos verificáveis.
+Do mais fácil ao mais difícil. Todos verificáveis. Servem para quem for
+pegar o projeto e precisar entendê-lo de verdade antes de mexer.
 
 **1. Uma espécie nova.** Adicione a 29ª em `js/data/especies.js`, com linha
 evolutiva e técnicas por nível. Coloque-a numa tabela de encontro em

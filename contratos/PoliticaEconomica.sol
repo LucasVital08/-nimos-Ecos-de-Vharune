@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 /*
-  PoliticaEconomica — o termostato de Crisálida.
+  PoliticaEconomica — o termostato de Ânimos.
 
   ESPECIFICAÇÃO. NÃO IMPLANTADO. NÃO AUDITADO.
 
