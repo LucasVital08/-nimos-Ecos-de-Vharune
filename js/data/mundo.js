@@ -77,7 +77,7 @@
     npcs: [
       { id: 'oriel', x: 22, y: 7, dir: 'baixo', sprite: 'mestra', nome: 'Mestra Oriel',
         falas: [
-          'O Véu está mais fino este ano. Consegue sentir? O ar pinica na nuca.',
+          'A Crisálida anda escorrendo mais este ano. Consegue sentir? O ar pinica na nuca.',
           'Seu Ânimo não é uma ferramenta. Alimente, descanse, escove — o vínculo faz mais pelos atributos do que qualquer treino forçado.',
           'Se algum dia chegar às Ruínas de Aldherin, não vá sozinho. E não confie no que a Ordem do Prisma Oco disser lá.'
         ] },
@@ -93,7 +93,7 @@
         ] },
       { id: 'velho_hann', x: 30, y: 21, dir: 'esquerda', sprite: 'aldeao', nome: 'Velho Hann',
         falas: [
-          'Trezentos anos desde a Fratura de Orva e a gente ainda varre cinza da soleira. Vharune não esquece.',
+          'Trezentos e doze anos desde a Noite Partida e a gente ainda varre cinza da soleira. Vharune não esquece.',
           'No Santuário eles curam de graça. Aproveite enquanto for jovem e teimoso.'
         ] },
       { id: 'guarda_sul', x: 15, y: 23, dir: 'baixo', sprite: 'guarda', nome: 'Guarda Ilva',
@@ -491,7 +491,7 @@
       'MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM'
     ],
     placas: [
-      { x: 13, y: 21, texto: 'ALDHERIN — CIDADE DO VÉU\n"Aqui o Véu foi costurado. Aqui ele se rasgou."\nA névoa de éter esconde Ânimos que não deviam existir.' }
+      { x: 13, y: 21, texto: 'ALDHERIN\n"Aqui caiu o primeiro fragmento. Aqui a cidade acabou numa noite."\nA névoa de éter esconde Ânimos que não deviam existir.' }
     ],
     npcs: [
       { id: 'vorik', x: 18, y: 10, dir: 'esquerda', sprite: 'rival', nome: 'Vorik, do Prisma Oco',
@@ -502,9 +502,9 @@
       { id: 'kestren_ruinas', x: 15, y: 20, dir: 'cima', sprite: 'rival', nome: 'Kestren',
         falas: [
           'Cheguei primeiro, como prometi. E agora estou com medo, como não prometi.',
-          'Tem algo no coração das ruínas. Grande. Antigo. Toma um Selo do Véu — é o único que talvez funcione.'
+          'Tem algo no coração das ruínas. Grande. Antigo. Toma um Selo da Crisálida — é o único que talvez funcione.'
         ],
-        presente: { item: 'selo_do_veu', qtd: 1 } }
+        presente: { item: 'selo_da_crisalida', qtd: 1 } }
     ],
     warps: [
       { x: 13, y: 24, para: 'passo_ferrugem', px: 21, py: 27, dir: 'cima' },
@@ -568,13 +568,16 @@
 
   /* ------------------------------ Narrativa --------------------------- */
   G.INTRO = [
-    'Trezentos anos atrás, a lua Orva se partiu.',
-    'Pela fenda escorreu o éter cru que o Véu segurava — e ele desceu sobre Vharune como uma chuva que não molha.',
-    'Onde a luz de Orva tocou o chão, nasceram os Ânimos: criaturas feitas de matéria e memória.',
-    'Eles ainda descem, a cada ciclo de Orva. Quem aprende a caminhar ao lado deles é chamado de Vinculista.',
+    'Há trezentos e doze anos, uma pedra vinda do escuro acertou a lua.',
+    'Orva não se despedaçou. Ela trincou — e a trinca ficou aberta, como uma casca esperando algo sair.',
+    'Deram a ela o nome de Crisálida.',
+    'E alguma coisa saiu. Desceram sobre Vharune por três anos, e o povo os chamou de Ecos, porque pareciam a lembrança de algo que morava lá dentro.',
+    'Durante oitenta anos nós os caçamos. Até uma menina de uma vila de cinzas fazer o que ninguém tinha tentado: em vez de lutar, ela alimentou um.',
+    'Hoje eles não são mais Ecos. São Ânimos — e quem caminha ao lado deles se chama Vinculista.',
+    'A Crisálida continua aberta. A cada volta de Orva, desce gente nova.',
     'Hoje é o seu primeiro dia. A Mestra Oriel deixou um Ânimo esperando por você.'
   ];
 
   G.ESCOLHA_INICIAL = ['verdil', 'fagulho', 'gotil'];
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

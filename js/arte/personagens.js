@@ -466,4 +466,4 @@
     return A.canvasItem(icone).toDataURL();
   };
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

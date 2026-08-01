@@ -981,4 +981,4 @@
 
   A.limparCache = function () { CACHE = {}; CACHE_ORDEM = []; };
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

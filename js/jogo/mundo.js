@@ -455,4 +455,4 @@
 
   M.limparCacheMapas = function () { cacheMapas = {}; ordemCache = []; };
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

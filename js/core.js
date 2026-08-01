@@ -1,14 +1,14 @@
 /* =========================================================================
-   CRISÁLIDA — Ecos de Vharune
+   ÂNIMOS — Ecos de Vharune
    core.js — namespace global, RNG determinístico e utilitários
    ========================================================================= */
 (function (global) {
   'use strict';
 
-  var G = global.CRISALIDA || (global.CRISALIDA = {});
+  var G = global.ANIMOS || (global.ANIMOS = {});
 
   G.VERSION = '1.0.0';
-  G.TITULO = 'CRISÁLIDA';
+  G.TITULO = 'ÂNIMOS';
   G.SUBTITULO = 'Ecos de Vharune';
 
   /* ---------------------------------------------------------------------

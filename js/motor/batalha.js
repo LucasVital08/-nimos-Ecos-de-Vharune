@@ -568,4 +568,4 @@
   B.velocidadeEfetiva = velocidadeEfetiva;
   B.atributoEfetivo = atrib;
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

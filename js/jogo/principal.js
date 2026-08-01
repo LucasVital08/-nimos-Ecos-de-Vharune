@@ -45,7 +45,7 @@
     var nota = G.el('#nota-save');
     if (temSave) {
       try {
-        var s = JSON.parse(localStorage.getItem('crisalida.save.v1'));
+        var s = JSON.parse(localStorage.getItem('animos.save.v1'));
         var d = new Date(s.atualizadoEm || s.criadoEm);
         nota.textContent = 'Última jornada: ' + s.jogador.nome + ' · ' +
           (s.equipe ? s.equipe.length : 0) + ' Ânimo(s) · ' + d.toLocaleString('pt-BR');
@@ -105,7 +105,7 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
 
-      /* rasgo do Véu */
+      /* a trinca de Orva */
       ctx.save();
       ctx.globalAlpha = 0.5;
       var rg = ctx.createRadialGradient(w * 0.5, h * 0.2, 6, w * 0.5, h * 0.2, Math.max(w, h) * 0.55);
@@ -428,4 +428,4 @@
     UI.dialogo({ nome: null, linhas: ['A porta está trancada.'] });
   }
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

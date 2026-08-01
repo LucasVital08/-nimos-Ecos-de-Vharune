@@ -129,7 +129,7 @@
       categoria: 'Ânimo do Abismo',
       base: { hp: 88, atk: 86, def: 94, atkEsp: 96, defEsp: 94, vel: 70 },
       cap: 45, xpB: 238, altura: 2.4, peso: 210.0,
-      desc: 'Vive no fundo do Lago Miravel, onde a luz do Véu não chega. Seus olhos guardam a única imagem conhecida de Orva inteira, antes da fenda.',
+      desc: 'Vive no fundo do Lago Miravel, onde a luz de Orva não chega. Seus olhos guardam a única imagem conhecida de Orva inteira, antes da fenda.',
       evo: null,
       apr: [[1, 'presa_da_mare'], [1, 'toque_sombrio'], [1, 'neblina_salgada'], [1, 'pulso_vazio'], [30, 'vagalhao'], [36, 'ceifa_de_ecos'], [42, 'abraco_da_penumbra'], [50, 'espiral_abissal']],
       art: {
@@ -185,7 +185,7 @@
       categoria: 'Ânimo do Horizonte',
       base: { hp: 72, atk: 82, def: 66, atkEsp: 78, defEsp: 72, vel: 108 },
       cap: 75, xpB: 205, altura: 1.5, peso: 26.0,
-      desc: 'Voa alto o bastante para tocar as bordas do Véu, e volta com penas mornas de luz. Enxerga um Ânimo escondido a três colinas de distância.',
+      desc: 'Voa alto o bastante para cruzar o éter ainda em queda, e volta com penas mornas de luz. Enxerga um Ânimo escondido a três colinas de distância.',
       evo: null,
       apr: [[1, 'lamina_de_vento'], [1, 'faisca_solar'], [1, 'golpe_veloz'], [1, 'bico_perfurante'], [24, 'correnteza_ascendente'], [30, 'mergulho_veloz'], [36, 'lamina_radiante'], [42, 'ciclone_do_passo'], [48, 'juizo_da_alvorada']],
       art: {
@@ -258,7 +258,7 @@
       cap: 130, xpB: 70, altura: 0.4, peso: 12.0,
       desc: 'Deixa um rastro de geada por onde passa. Se ficar feliz demais, congela acidentalmente o próprio alimento.',
       evo: { para: 'nevarco', nivel: 26 },
-      apr: [[1, 'investida'], [1, 'sopro_gelado'], [7, 'armadura_de_geada'], [12, 'estilhaco_de_gelo'], [18, 'neblina_salgada'], [25, 'descanso_astral'], [32, 'nevasca_do_veu']],
+      apr: [[1, 'investida'], [1, 'sopro_gelado'], [7, 'armadura_de_geada'], [12, 'estilhaco_de_gelo'], [18, 'neblina_salgada'], [25, 'descanso_astral'], [32, 'nevasca_de_orva']],
       art: {
         arch: 'ameba', c1: [190, 58, 68], c2: [204, 52, 54], c3: [200, 30, 92], olho: [220, 45, 26],
         o: { escala: 0.8, corpoRX: 24, corpoRY: 22, cabecaR: 0, crista: 'cristal', orelhas: 'nenhuma', cauda: 'nenhuma', olhos: 'redondo', boca: 'sorriso', cristais: true }
@@ -271,7 +271,7 @@
       cap: 55, xpB: 208, altura: 2.0, peso: 186.0,
       desc: 'Sua carapaça é gelo comprimido até virar liga. Nevarcos vagam pelo Passo Ferrugem carregando ninhos inteiros de Ânimos menores nas costas.',
       evo: null,
-      apr: [[1, 'sopro_gelado'], [1, 'ferrao_metalico'], [1, 'armadura_de_geada'], [1, 'estilhaco_de_gelo'], [28, 'muralha_de_seixos'], [34, 'prensa_de_aco'], [40, 'descanso_astral'], [47, 'nevasca_do_veu']],
+      apr: [[1, 'sopro_gelado'], [1, 'ferrao_metalico'], [1, 'armadura_de_geada'], [1, 'estilhaco_de_gelo'], [28, 'muralha_de_seixos'], [34, 'prensa_de_aco'], [40, 'descanso_astral'], [47, 'nevasca_de_orva']],
       art: {
         arch: 'golem', c1: [196, 42, 58], c2: [210, 20, 46], c3: [186, 70, 82], olho: [220, 55, 30],
         o: { escala: 1.12, corpoRX: 30, corpoRY: 27, cabecaR: 0, crista: 'cristal', orelhas: 'nenhuma', cauda: 'nenhuma', olhos: 'brilho', boca: 'nenhuma', blocos: true, bracos: true, cristais: true }
@@ -383,7 +383,7 @@
       cap: 80, xpB: 178, altura: 1.4, peso: 55.0,
       desc: 'Sobe corredeiras congeladas contra a corrente por puro orgulho. Escamas afiadas o suficiente para cortar a linha de um pescador desatento.',
       evo: null,
-      apr: [[1, 'jato_orvalho'], [1, 'sopro_gelado'], [1, 'golpe_veloz'], [14, 'presa_da_mare'], [21, 'estilhaco_de_gelo'], [28, 'armadura_de_geada'], [35, 'vagalhao'], [42, 'nevasca_do_veu']],
+      apr: [[1, 'jato_orvalho'], [1, 'sopro_gelado'], [1, 'golpe_veloz'], [14, 'presa_da_mare'], [21, 'estilhaco_de_gelo'], [28, 'armadura_de_geada'], [35, 'vagalhao'], [42, 'nevasca_de_orva']],
       art: {
         arch: 'aquatico', c1: [192, 55, 50], c2: [206, 48, 38], c3: [176, 65, 76], olho: [40, 85, 58],
         o: { escala: 0.98, corpoRX: 30, corpoRY: 18, cabecaR: 16, crista: 'barbatana', orelhas: 'barbatana', cauda: 'leque', olhos: 'fenda', boca: 'presas' }
@@ -391,10 +391,10 @@
     }),
     e({
       num: 28, id: 'vharuneth', nome: 'Vharuneth', tipos: ['aurora', 'umbra'],
-      categoria: 'Eco do Véu',
+      categoria: 'O Primeiro Eco',
       base: { hp: 100, atk: 95, def: 90, atkEsp: 125, defEsp: 110, vel: 95 },
       cap: 4, xpB: 320, altura: 3.4, peso: 0.0,
-      desc: 'Não é bem um Ânimo: é o que sobrou do Véu quando ele se rasgou. Aparece a um vinculista por geração, e ninguém concorda sobre o que ele quer.',
+      desc: 'Não é bem um Ânimo: foi o primeiro a descer, antes de qualquer outro, e caiu junto com o fragmento que apagou Aldherin. Aparece a um vinculista por geração, e ninguém concorda sobre o que ele quer.',
       evo: null,
       apr: [[1, 'juizo_da_alvorada'], [1, 'abraco_da_penumbra'], [1, 'concentrar'], [1, 'rajada_etera'], [50, 'foco_agudo'], [55, 'descanso_astral'], [60, 'pulso_vazio'], [65, 'lanca_de_raio']],
       art: {
@@ -442,4 +442,4 @@
     { id: 'estelar',   nome: 'Estelar' }
   ];
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

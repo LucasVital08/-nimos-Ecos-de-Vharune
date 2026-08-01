@@ -8,8 +8,18 @@
   var C = G.Criatura;
   var E = G.Estado = {};
 
-  var CHAVE = 'crisalida.save.v1';
-  var CHAVE_CFG = 'crisalida.cfg.v1';
+  var CHAVE = 'animos.save.v1';
+  var CHAVE_CFG = 'animos.cfg.v1';
+  /* Chaves antigas, de quando o jogo se chamava Crisálida. Só são lidas, nunca
+     escritas: quem já estava testando não perde o progresso na renomeação. */
+  var CHAVE_ANTIGA = 'crisalida.save.v1';
+  var CHAVE_CFG_ANTIGA = 'crisalida.cfg.v1';
+
+  function ler(chave, chaveAntiga) {
+    try {
+      return localStorage.getItem(chave) || localStorage.getItem(chaveAntiga);
+    } catch (e) { return null; }
+  }
 
   E.MAX_EQUIPE = 6;
 
@@ -38,7 +48,7 @@
         fruta_doce: 3,
         racao_etera: 2,
         erva_purificante: 1,
-        lente_do_veu: 1
+        lente_de_orva: 1
       },
       bestiario: {},
       flags: {},
@@ -211,12 +221,12 @@
   };
 
   E.existeSave = function () {
-    try { return !!localStorage.getItem(CHAVE); } catch (e) { return false; }
+    return !!ler(CHAVE, CHAVE_ANTIGA);
   };
 
   E.carregar = function () {
     try {
-      var bruto = localStorage.getItem(CHAVE);
+      var bruto = ler(CHAVE, CHAVE_ANTIGA);
       if (!bruto) return false;
       var s = JSON.parse(bruto);
       if (!s || !s.jogador) return false;
@@ -272,9 +282,9 @@
   };
   E.carregarCfg = function () {
     try {
-      var b = localStorage.getItem(CHAVE_CFG);
+      var b = ler(CHAVE_CFG, CHAVE_CFG_ANTIGA);
       if (b) E.cfg = Object.assign(E.cfg, JSON.parse(b));
     } catch (e) { /* ignora */ }
   };
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

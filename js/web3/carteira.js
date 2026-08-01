@@ -80,7 +80,7 @@
     return {
       name: C.nome(c) + ' #' + (c.seed >>> 0).toString(16).toUpperCase(),
       description: 'Ânimo de Vharune registrado por um Vinculista. ' + esp.desc,
-      external_url: 'https://exemplo.invalido/crisalida',
+      external_url: 'https://exemplo.invalido/animos',
       image: G.Arte.dataURL(c.esp, G.variacaoDe(c)),
       attributes: [
         { trait_type: 'Espécie', value: esp.nome },
@@ -109,7 +109,7 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'crisalida-' + c.esp + '-' + (c.seed >>> 0).toString(16) + '.json';
+    a.download = 'animos-' + c.esp + '-' + (c.seed >>> 0).toString(16) + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -124,7 +124,7 @@
     var aviso = G.criar('div', 'op-bloco');
     aviso.appendChild(G.criar('h4', null, 'O que este módulo faz — e o que não faz'));
     aviso.appendChild(G.criar('p', null,
-      'Crisálida é um jogo completo sem blockchain nenhuma. Este painel existe só como base técnica opcional.\n\n' +
+      'Ânimos é um jogo completo sem blockchain nenhuma. Este painel existe só como base técnica opcional.\n\n' +
       '• Nada é implantado na rede e nenhum NFT real é criado.\n' +
       '• Nenhuma transação é montada, assinada ou enviada — em lugar nenhum do código.\n' +
       '• A conexão só ocorre se você clicar, e serve apenas para exibir seu endereço.\n' +
@@ -213,4 +213,4 @@
     corpo.appendChild(box);
   };
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

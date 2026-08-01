@@ -308,4 +308,4 @@
     return { seed: c.seed, matiz: c.matiz, padrao: c.padrao, porte: c.porte, prismatico: c.prismatico };
   };
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

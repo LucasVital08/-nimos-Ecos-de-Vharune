@@ -18,9 +18,9 @@
     { id: 'selo_aureo', nome: 'Selo Áureo', cat: 'selo', uso: 'batalha', preco: 1200, venda: 600,
       taxa: 2.4, icone: 'selo3',
       desc: 'Feito nas oficinas do Passo Ferrugem. Raramente falha com um Ânimo cansado.' },
-    { id: 'selo_do_veu', nome: 'Selo do Véu', cat: 'selo', uso: 'batalha', preco: 0, venda: 0,
+    { id: 'selo_da_crisalida', nome: 'Selo da Crisálida', cat: 'selo', uso: 'batalha', preco: 0, venda: 0,
       taxa: 4.0, icone: 'selo4',
-      desc: 'Fragmento do próprio Véu. Diz-se que ele não captura: ele convida.' },
+      desc: 'Âmbar tirado do fragmento que caiu com o Primeiro Eco. Diz-se que ele não captura: ele convida.' },
     { id: 'selo_do_lago', nome: 'Selo do Lago', cat: 'selo', uso: 'batalha', preco: 800, venda: 400,
       taxa: 1.2, bonusTipo: ['torrente', 'gelido'], bonusMult: 3.2, icone: 'selo5',
       desc: 'Água de Miravel selada em âmbar. Extremamente eficaz com Ânimos de Torrente e Gélido.' },
@@ -77,7 +77,7 @@
       desc: 'Toca uma nota que só o seu Ânimo escuta. O vínculo dá um salto.' },
 
     /* ------------------------------- CHAVE -------------------------------- */
-    { id: 'lente_do_veu', nome: 'Lente do Véu', cat: 'chave', uso: 'campo', preco: 0, venda: 0,
+    { id: 'lente_de_orva', nome: 'Lente de Orva', cat: 'chave', uso: 'campo', preco: 0, venda: 0,
       icone: 'lente', unico: true,
       desc: 'Presente da Mestra Oriel. Revela a chance de captura e os atributos ocultos de um Ânimo selvagem.' },
     { id: 'amuleto_ambar', nome: 'Amuleto de Âmbar', cat: 'chave', uso: 'campo', preco: 0, venda: 0,
@@ -102,4 +102,4 @@
     { id: 'chave', nome: 'Chaves', icone: '⚿' }
   ];
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

@@ -1,5 +1,5 @@
 /* =========================================================================
-   tecnicas.js — Técnicas (golpes) de Crisálida
+   tecnicas.js — Técnicas (golpes) de Ânimos
    ---------------------------------------------------------------------
    cat : 'fisico' | 'especial' | 'apoio'
    pot : potência base (0 para apoio)
@@ -70,7 +70,7 @@
     t('sopro_gelado', 'Sopro Gelado', 'gelido', 'especial', 50, 100, 25, 'Um sopro que cristaliza a umidade do ar.', { st: { s: 'congelamento', c: 0.08 } }),
     t('estilhaco_de_gelo', 'Estilhaço de Gelo', 'gelido', 'fisico', 60, 100, 20, 'Lasca de gelo lançada antes que o alvo reaja.', null, 1),
     t('armadura_de_geada', 'Armadura de Geada', 'gelido', 'apoio', 0, null, 15, 'Cobre-se de uma casca espessa de geada.', { mod: { alvo: 'eu', stats: { def: 2 }, c: 1 } }),
-    t('nevasca_do_veu', 'Nevasca do Véu', 'gelido', 'especial', 100, 80, 5, 'A tempestade branca que desce do Véu rasgado.', { st: { s: 'congelamento', c: 0.15 } }),
+    t('nevasca_de_orva', 'Nevasca de Orva', 'gelido', 'especial', 100, 80, 5, 'A tempestade branca que desce direto da trinca.', { st: { s: 'congelamento', c: 0.15 } }),
 
     /* ------------------------------ TERRA ----------------------------- */
     t('pedrada', 'Pedrada', 'terra', 'fisico', 50, 100, 25, 'Arremessa uma pedra bem escolhida.'),
@@ -125,4 +125,4 @@
     sono:         { nome: 'Adormecido',   sigla: 'SON', cor: '#8f8fd0', desc: 'Não age por alguns turnos.' }
   };
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

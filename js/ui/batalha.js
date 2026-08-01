@@ -567,14 +567,14 @@
     menuEstado = 'selos';
     limparMenu(true);
     var selos = E.selosDisponiveis();
-    var temLente = E.temItem('lente_do_veu');
+    var temLente = E.temItem('lente_de_orva');
     if (!selos.length) {
       elLog.textContent = 'Você não tem nenhum selo na mochila.';
       elMenu.appendChild(voltar());
       return;
     }
     elLog.textContent = temLente
-      ? 'A Lente do Véu estima a chance de vínculo.'
+      ? 'A Lente de Orva estima a chance de vínculo.'
       : 'Enfraqueça o Ânimo antes de arremessar.';
     selos.forEach(function (par) {
       var sub = 'Restam ' + par.qtd;
@@ -791,4 +791,4 @@
     return true;
   };
 
-})(window.CRISALIDA);
+})(window.ANIMOS);

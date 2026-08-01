@@ -1,4 +1,4 @@
-# CRISÁLIDA — Ecos de Vharune
+# ÂNIMOS — Ecos de Vharune
 
 Um RPG de exploração e captura de criaturas que roda **direto no navegador**, sem
 instalação, sem build, sem dependências e sem conexão com a internet.
@@ -7,14 +7,22 @@ Universo, criaturas, tipos elementais, mapa, narrativa, itens, interface e toda 
 arte são **originais e autorais**. Nenhum asset, nome, personagem, mapa, som ou
 elemento de qualquer franquia existente foi usado ou referenciado.
 
-> Trezentos anos atrás a lua **Orva** se partiu. Pela fenda escorre o éter cru que
-> o Véu segurava, e onde a luz de Orva toca o chão nascem os **Ânimos**. Eles ainda
-> descem, a cada ciclo. Quem aprende a caminhar ao lado deles é chamado de
-> **Vinculista**.
+> Uma pedra vinda do escuro trincou a lua **Orva**. A fenda — a **Crisálida** —
+> ficou aberta, e dela escorre o éter que toma forma ao encostar no chão. Chamaram
+> aquilo de **Ecos**, e os caçaram por oitenta anos, até uma menina descobrir que
+> eles respondem ao cuidado e não à força. Hoje são **Ânimos**, e quem caminha ao
+> lado deles se chama **Vinculista**.
+>
+> A história completa está em [docs/HISTORIA.md](docs/HISTORIA.md).
 
 ---
 
 ## Como jogar
+
+### A página de apresentação
+
+`landing.html` conta a história, mostra as 28 espécies com a arte real do jogo e
+explica os sistemas. É o melhor lugar para começar se você nunca viu o projeto.
 
 ### Opção 1 — abrir o arquivo (mais simples)
 
@@ -123,7 +131,7 @@ Toxina→Ferro). Ela pode ser consultada dentro do jogo em Bestiário → Aspect
 - **condições**: Queimadura, Veneno (progressivo), Paralisia, Congelamento e
   Sono, com imunidades temáticas por tipo;
 - **captura** com chance calculada a partir de vigor restante, condição, espécie,
-  nível e selo usado — a *Lente do Véu* mostra a porcentagem estimada;
+  nível e selo usado — a *Lente de Orva* mostra a porcentagem estimada;
 - **troca de Ânimo** durante a batalha (voluntária ou forçada após desmaio),
   **itens de cura** e **fuga** com chance baseada em velocidade e tentativas.
 
@@ -163,7 +171,7 @@ Empório compra e vende.
 
 ### Salvamento automático
 
-Tudo é gravado no `localStorage` (`crisalida.save.v1`) ao trocar de mapa, capturar,
+Tudo é gravado no `localStorage` (`animos.save.v1`) ao trocar de mapa, capturar,
 comprar, curar, a cada 40 passos, ao esconder a aba e ao fechar a página. Em
 **Menu → Opções** dá para salvar na hora, **exportar/importar** o save em texto e
 apagar tudo.
@@ -219,6 +227,10 @@ js/ui/telas.js             equipe, bestiário, mochila, loja, opções
 js/ui/batalha.js           cena de combate e reprodução dos eventos
 js/web3/carteira.js        camada Web3 opcional, somente leitura
 
+landing.html               página de apresentação (usa a arte real do jogo)
+docs/HISTORIA.md           a história e o mundo — cânone
+docs/DOCUMENTACAO.md       documentação técnica completa
+
 docs/ECONOMIA.md           a ideologia econômica play-to-earn (especificação)
 economia/parametros.json   todos os números da economia, fonte única
 economia/modelo.js         as fórmulas em JS (não carregado pelo jogo)
@@ -269,7 +281,7 @@ nenhuma espécie encosta no teto. A simulação já pegou dois erros de calibra�
 antes de existir contrato — os dois estão documentados em `docs/ECONOMIA.md`.
 
 > **Fase 0 é o que existe: o jogo, completo e jogável, sem blockchain nenhuma.**
-> Se as fases seguintes nunca acontecerem, Crisálida continua sendo um jogo inteiro.
+> Se as fases seguintes nunca acontecerem, Ânimos continua sendo um jogo inteiro.
 
 ## Blockchain / NFT — opcional, desligado e sem transações
 
