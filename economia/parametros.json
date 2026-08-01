@@ -1,0 +1,148 @@
+{
+  "$comentario": [
+    "CRISÁLIDA — parâmetros da economia play-to-earn.",
+    "ESTE ARQUIVO É ESPECIFICAÇÃO, NÃO CONFIGURAÇÃO ATIVA.",
+    "O jogo em js/ NÃO lê este arquivo. Nada aqui está implantado.",
+    "Todo número é ponto de partida para balanceamento, não valor final."
+  ],
+  "versao": "0.1.0-rascunho",
+  "status": "nao-implantado",
+
+  "ciclo": {
+    "nome": "Ciclo de Orva",
+    "duracaoSegundos": 2548800,
+    "duracaoDias": 29.5,
+    "explicacao": "A lua Orva rege a economia. Cada volta completa fecha um ciclo: a emissão decai, a razão de queima é apurada e o conjunto de espécies que descem é resorteado."
+  },
+
+  "tokens": {
+    "eter": {
+      "nome": "Éter",
+      "simbolo": "ETR",
+      "decimais": 18,
+      "tipo": "mole",
+      "suprimentoMaximo": null,
+      "emissaoBaseCiclo": 40000000,
+      "decaimentoPorCiclo": 0.985,
+      "tetoAcumuladoTeorico": 2666666667,
+      "explicacao": "Moeda de giro. Emitida por jogar, queimada por consumir. Sem teto rígido, mas a emissão por ciclo decai 1,5% para sempre, o que dá um limite assintótico."
+    },
+    "ambar": {
+      "nome": "Âmbar",
+      "simbolo": "AMB",
+      "decimais": 18,
+      "tipo": "duro",
+      "suprimentoMaximo": 100000000,
+      "emissaoPosGenese": 0,
+      "explicacao": "Moeda escassa. Cunhada uma única vez na gênese e nunca mais. Só sai da tesouraria por conquista, e volta por queima.",
+      "distribuicaoGenese": {
+        "recompensasDeJogo": 0.30,
+        "tesourariaEDesenvolvimento": 0.20,
+        "liquidez": 0.15,
+        "comunidadeEEventos": 0.15,
+        "equipe": 0.12,
+        "reservaDeEmergencia": 0.08
+      },
+      "vesting": {
+        "equipe": { "cliffMeses": 12, "duracaoMeses": 48 },
+        "tesourariaEDesenvolvimento": { "cliffMeses": 0, "duracaoMeses": 48 },
+        "recompensasDeJogo": { "cliffMeses": 0, "duracaoMeses": 96 }
+      }
+    }
+  },
+
+  "politica": {
+    "metaQueima": 1.05,
+    "expoenteSaturacao": 1.375,
+    "expoenteCusto": 0.625,
+    "fatorPoliticaMin": 0.60,
+    "fatorPoliticaMax": 2.50,
+    "razaoQueimaMinima": 0.05,
+    "metaBaseEspecie": 200000,
+    "expoenteRaridade": 2.25,
+    "metaMinima": 20,
+    "capturaEfetivaMin": 1,
+    "capturaEfetivaMax": 255,
+    "explicacao": "metaQueima 1.05 significa que a política mira queimar 5% a mais do que se emite por ciclo — deflação leve e intencional.",
+    "$expoentes": "1.375 = 11/8, 0.625 = 5/8 e 2.25 = 9/4 são frações exatas de propósito: Solidity não tem ponto flutuante, e essas potências saem só com multiplicação e raiz quadrada. Assim o JS e o contrato produzem exatamente o mesmo número, sem divergência de arredondamento."
+  },
+
+  "raridade": {
+    "faixas": [
+      { "id": "comum",     "capMin": 120, "capMax": 255, "descePorCiclo": "1/1"  },
+      { "id": "incomum",   "capMin": 60,  "capMax": 119, "descePorCiclo": "3/4"  },
+      { "id": "raro",      "capMin": 20,  "capMax": 59,  "descePorCiclo": "1/2"  },
+      { "id": "muitoRaro", "capMin": 5,   "capMax": 19,  "descePorCiclo": "1/4"  },
+      { "id": "lendario",  "capMin": 0,   "capMax": 4,   "descePorCiclo": "1/12" }
+    ],
+    "explicacao": "A taxa de captura da espécie (campo cap em js/data/especies.js) define tanto a meta de oferta quanto a frequência com que ela desce de Orva."
+  },
+
+  "sumidouros": {
+    "$comentario": "queima = fração destruída; tesouraria = fração que vai ao cofre. A soma é sempre 1.",
+    "selos": {
+      "selo_simples":   { "moeda": "ETR", "custo": 12,  "queima": 1.00, "tesouraria": 0.00 },
+      "selo_reforcado": { "moeda": "ETR", "custo": 40,  "queima": 1.00, "tesouraria": 0.00 },
+      "selo_do_lago":   { "moeda": "ETR", "custo": 80,  "queima": 0.85, "tesouraria": 0.15 },
+      "selo_da_brasa":  { "moeda": "ETR", "custo": 80,  "queima": 0.85, "tesouraria": 0.15 },
+      "selo_aureo":     { "moeda": "ETR", "custo": 120, "queima": 0.70, "tesouraria": 0.30 },
+      "selo_do_veu":    { "moeda": "AMB", "custo": 25,  "queima": 0.60, "tesouraria": 0.40 }
+    },
+    "insumos": {
+      "elixir_menor":      { "moeda": "ETR", "custo": 8,  "queima": 1.00, "tesouraria": 0.00 },
+      "elixir":            { "moeda": "ETR", "custo": 22, "queima": 1.00, "tesouraria": 0.00 },
+      "elixir_maior":      { "moeda": "ETR", "custo": 55, "queima": 1.00, "tesouraria": 0.00 },
+      "nectar_pleno":      { "moeda": "ETR", "custo": 95, "queima": 1.00, "tesouraria": 0.00 },
+      "erva_purificante":  { "moeda": "ETR", "custo": 15, "queima": 1.00, "tesouraria": 0.00 },
+      "semente_alvorada":  { "moeda": "ETR", "custo": 80, "queima": 0.90, "tesouraria": 0.10 },
+      "fruta_doce":        { "moeda": "ETR", "custo": 4,  "queima": 1.00, "tesouraria": 0.00 },
+      "racao_etera":       { "moeda": "ETR", "custo": 7,  "queima": 1.00, "tesouraria": 0.00 },
+      "bolo_de_mel":       { "moeda": "ETR", "custo": 12, "queima": 1.00, "tesouraria": 0.00 },
+      "geleia_astral":     { "moeda": "ETR", "custo": 26, "queima": 1.00, "tesouraria": 0.00 },
+      "cristal_descanso":  { "moeda": "ETR", "custo": 18, "queima": 1.00, "tesouraria": 0.00 },
+      "incenso_lavanda":   { "moeda": "ETR", "custo": 14, "queima": 1.00, "tesouraria": 0.00 },
+      "sino_do_vinculo":   { "moeda": "ETR", "custo": 70, "queima": 0.85, "tesouraria": 0.15 },
+      "escova_seda":       { "moeda": "ETR", "custo": 30, "queima": 0.80, "tesouraria": 0.20, "duravel": true }
+    },
+    "servicos": {
+      "cura_santuario":  { "moeda": "ETR", "custo": 6,  "queima": 1.00, "tesouraria": 0.00 },
+      "batismo":         { "moeda": "AMB", "custo": 5,  "queima": 0.50, "tesouraria": 0.50 },
+      "rebatismo":       { "moeda": "AMB", "custo": 25, "queima": 0.80, "tesouraria": 0.20 },
+      "taxa_mercado":    { "moeda": "*",   "percentual": 0.05, "queima": 0.40, "tesouraria": 0.60 }
+    }
+  },
+
+  "fontes": {
+    "$comentario": "Tudo aqui é multiplicado pelo fator de emissão do ciclo corrente.",
+    "eter": {
+      "vitoriaBase": 4.2,
+      "vitoriaPorNivelInimigo": 0.55,
+      "bonusVinculoMaximo": 0.35,
+      "cicloBemCuidado": 22,
+      "maxAnimosPremiadosPorCiclo": 6,
+      "primeiraVisitaRegiao": 40,
+      "limiteVinculoParaPremio": 80,
+      "limiteSaciedadeMediaParaPremio": 60
+    },
+    "ambar": {
+      "primeiraCapturaDeEspecie": 2,
+      "marcosBestiario": { "25": 50, "50": 150, "75": 400, "100": 1200 },
+      "poolRankingCuidadoPorCiclo": 25000,
+      "vagasRanking": 1000
+    }
+  },
+
+  "cuidado": {
+    "letargiaAposCiclosSemAlimento": 1,
+    "explicacao": "Saciedade zerada por um ciclo inteiro põe o Ânimo em Letargia: ele não batalha e não gera recompensa até ser alimentado. É REVERSÍVEL e NUNCA destrói o NFT.",
+    "reversivel": true,
+    "destroiNft": false
+  },
+
+  "limites": {
+    "capturasPorCarteiraPorCiclo": 60,
+    "batismosPorTransacao": 1,
+    "loteInsumosMaximo": 50,
+    "explicacao": "Tetos anti-abuso e anti-bot, ajustáveis por governança."
+  }
+}
