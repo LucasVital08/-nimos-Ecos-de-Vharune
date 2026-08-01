@@ -85,6 +85,10 @@ contract VinculoEtereo is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard, EI
     /// @dev O apelido muda; o nome de nascimento, nunca.
     mapping(uint256 tokenId => Nascimento) private _certidao;
     mapping(uint256 tokenId => string) private _apelido;
+    /// @dev Guardamos o hash NORMALIZADO do apelido, não o hash do texto cru.
+    ///      É ele que indexa tokenPorNome; sem isso, liberar o apelido antigo
+    ///      apagaria uma chave que não existe e vazaria a reserva para sempre.
+    mapping(uint256 tokenId => bytes32) private _apelidoNormalizado;
     mapping(bytes32 nomeNormalizado => uint256 tokenId) public tokenPorNome;
 
     // ------------------------------------------------------------------ //
@@ -312,14 +316,15 @@ contract VinculoEtereo is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard, EI
         if (bytes(novoApelido).length < 2 || bytes(novoApelido).length > 48) revert NomeInvalido();
         if (tokenPorNome[apelidoNormalizado] != 0) revert NomeIndisponivel(apelidoNormalizado);
 
-        bytes32 anterior = keccak256(bytes(_apelido[tokenId]));
-        if (anterior != keccak256("")) {
-            // libera o apelido antigo para outra pessoa
-            delete tokenPorNome[anterior];
-        }
+        // Libera o apelido anterior. Repare que usamos o hash normalizado
+        // guardado, e não keccak256 do texto: são valores diferentes, e apagar
+        // o errado deixaria o apelido antigo reservado para sempre.
+        bytes32 anterior = _apelidoNormalizado[tokenId];
+        if (anterior != bytes32(0)) delete tokenPorNome[anterior];
 
         _cobrarEmAmbar(CUSTO_REBATISMO, REBATISMO_QUEIMA_BP);
         _apelido[tokenId] = novoApelido;
+        _apelidoNormalizado[tokenId] = apelidoNormalizado;
         tokenPorNome[apelidoNormalizado] = tokenId;
         emit Apelidado(tokenId, novoApelido);
     }

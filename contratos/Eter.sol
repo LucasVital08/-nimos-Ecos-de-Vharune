@@ -21,6 +21,10 @@ import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+interface IPolitica {
+    function registrarFluxo(uint256 emitido, uint256 queimado) external;
+}
+
 contract Eter is ERC20, ERC20Burnable, ERC20Permit, Ownable {
     // ------------------------------------------------------------------ //
     //  Emissão                                                            //
@@ -42,6 +46,14 @@ contract Eter is ERC20, ERC20Burnable, ERC20Permit, Ownable {
     /// @notice Endereço autorizado a distribuir recompensas.
     address public distribuidor;
 
+    /// @notice Contrato de política. Precisa saber quanto foi emitido para
+    ///         calcular a razão de queima — sem isso o termostato nunca liga.
+    IPolitica public politica;
+
+    /// @dev Memo do teto por ciclo: o cálculo é um laço, e pagá-lo a cada
+    ///      emissão do mesmo ciclo é desperdício de gás.
+    mapping(uint256 ciclo => uint256 teto) private _memoTeto;
+
     /// @dev ciclo => quanto já foi emitido nele.
     mapping(uint256 ciclo => uint256 emitido) public emitidoNoCiclo;
 
@@ -50,6 +62,7 @@ contract Eter is ERC20, ERC20Burnable, ERC20Permit, Ownable {
     // ------------------------------------------------------------------ //
 
     event DistribuidorDefinido(address indexed anterior, address indexed novo);
+    event PoliticaDefinida(address indexed nova);
     event RecompensaEmitida(address indexed para, uint256 valor, uint256 ciclo);
 
     error NaoAutorizado();
@@ -106,19 +119,34 @@ contract Eter is ERC20, ERC20Burnable, ERC20Permit, Ownable {
         distribuidor = novo;
     }
 
+    function definirPolitica(address nova) external onlyOwner {
+        politica = IPolitica(nova);
+        emit PoliticaDefinida(nova);
+    }
+
+    /// @dev Primeira chamada do ciclo paga o laço; as seguintes leem o memo.
+    function _tetoComMemo(uint256 ciclo) private returns (uint256) {
+        uint256 memo = _memoTeto[ciclo];
+        if (memo != 0) return memo;
+        uint256 v = tetoDoCiclo(ciclo);
+        _memoTeto[ciclo] = v;
+        return v;
+    }
+
     /// @notice Emite recompensa de jogo. Respeita o teto do ciclo mesmo para o dono.
     function emitirRecompensa(address para, uint256 valor) external {
         if (msg.sender != distribuidor && msg.sender != owner()) revert NaoAutorizado();
         if (para == address(0)) revert DestinoInvalido();
 
         uint256 c = cicloAtual();
-        uint256 teto = tetoDoCiclo(c);
+        uint256 teto = _tetoComMemo(c);
         uint256 usado = emitidoNoCiclo[c];
         uint256 disponivel = usado >= teto ? 0 : teto - usado;
         if (valor > disponivel) revert TetoDoCicloExcedido(valor, disponivel);
 
         emitidoNoCiclo[c] = usado + valor;
         _mint(para, valor);
+        if (address(politica) != address(0)) politica.registrarFluxo(valor, 0);
         emit RecompensaEmitida(para, valor, c);
     }
 
@@ -129,7 +157,7 @@ contract Eter is ERC20, ERC20Burnable, ERC20Permit, Ownable {
         if (n == 0 || n > 200 || n != valores.length) revert DestinoInvalido();
 
         uint256 c = cicloAtual();
-        uint256 teto = tetoDoCiclo(c);
+        uint256 teto = _tetoComMemo(c);
         uint256 usado = emitidoNoCiclo[c];
 
         uint256 soma;
@@ -138,6 +166,7 @@ contract Eter is ERC20, ERC20Burnable, ERC20Permit, Ownable {
         uint256 disponivel = usado >= teto ? 0 : teto - usado;
         if (soma > disponivel) revert TetoDoCicloExcedido(soma, disponivel);
         emitidoNoCiclo[c] = usado + soma;
+        if (address(politica) != address(0)) politica.registrarFluxo(soma, 0);
 
         for (uint256 i = 0; i < n; ++i) {
             if (destinos[i] == address(0)) revert DestinoInvalido();

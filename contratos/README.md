@@ -34,6 +34,8 @@ Depois:
   vinculoEtereo.definirContratos(politica, insumos)
   vinculoEtereo.definirCustoDeSelo(id, custoBase) ← por selo
   eter.definirDistribuidor(distribuidorDeRecompensas)
+  eter.definirPolitica(politica)                  ← senão o termostato nunca liga
+  politica.definirRelator(eter, true)
   tesouraria.definirTeto(eter, X) e (ambar, Y)
 ```
 
