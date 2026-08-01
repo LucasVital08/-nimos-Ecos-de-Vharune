@@ -11,7 +11,7 @@
 
   var M = G.Mundo = {};
 
-  var cv, ctx, mapa, estatico, aguas, larguraCSS, alturaCSS, dpr = 1;
+  var cv, ctx, mapa, estatico, objetos, aguas, larguraCSS, alturaCSS, dpr = 1;
   var zoom = 2;
   var rodando = false, pausado = false;
   var ultimo = 0, tempo = 0;
@@ -78,6 +78,7 @@
       ordemCache.push(id);
     }
     estatico = cacheMapas[id].canvas;
+    objetos = cacheMapas[id].objetos;
     aguas = cacheMapas[id].aguas;
     p.x = px; p.y = py; p.dir = dir || 'baixo';
     p.movendo = false; p.prog = 0;
@@ -134,6 +135,8 @@
   }
 
   function chegouNoTile() {
+    /* poeira/folhas no ponto exato onde o pé encostou */
+    soltarPoeira(p.x * TS + TS / 2, p.y * TS + TS - 3, tileEm(p.x, p.y));
     E.s.jogador.x = p.x;
     E.s.jogador.y = p.y;
     E.s.jogador.dir = p.dir;
@@ -286,6 +289,13 @@
       var k = ev.key.toLowerCase();
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].indexOf(k) >= 0) ev.preventDefault();
       if (G.UI && G.UI.capturaTeclado && G.UI.capturaTeclado(ev)) return;
+      /* Fora da tela de jogo (título, intro, escolha) quem manda é a
+         navegação por teclado, não o andar. */
+      var telaJogo = document.getElementById('tela-jogo');
+      if (!telaJogo || !telaJogo.classList.contains('ativa')) {
+        if (G.Nav && G.Nav.tecla(ev, document.querySelector('.tela.ativa'))) return;
+        return;
+      }
       teclas[k] = true;
       if (k === 'enter' || k === ' ' || k === 'e') M.interagir();
     });
@@ -380,11 +390,11 @@
     ctx.scale(zoom, zoom);
     ctx.translate(-Math.round(camX * zoom) / zoom, -Math.round(camY * zoom) / zoom);
 
-    /* camada estática (pintada em resolução dobrada, reduzida aqui) */
+    /* --------- 1. chão (resolução dobrada, reduzida aqui) --------- */
     ctx.drawImage(estatico, 0, 0, estatico.width, estatico.height,
                   0, 0, mapa.larg * TS, mapa.alt * TS);
 
-    /* água animada (só o que está visível) */
+    /* --------- 2. água animada (só o que está visível) --------- */
     var x0 = Math.floor(camX / TS) - 1, x1 = Math.ceil((camX + pw) / TS) + 1;
     var y0 = Math.floor(camY / TS) - 1, y1 = Math.ceil((camY + ph) / TS) + 1;
     for (var i = 0; i < aguas.length; i++) {
@@ -393,22 +403,56 @@
       A.desenharAgua(ctx, a[0], a[1], a[2], tempo, a[3]);
     }
 
-    /* NPCs */
+    /* --------- 3. passada ordenada por profundidade ---------
+       Personagens e objetos do cenário são intercalados pela linha em que os
+       pés tocam o chão. É isso que faz o jogador sumir ATRÁS de uma árvore
+       que está à frente dele, e a grama alta cobrir só os pés de quem passa. */
+    var atores = [];
     if (mapa.npcs) {
       mapa.npcs.forEach(function (n) {
-        if (n.x < x0 || n.x > x1 || n.y < y0 || n.y > y1) return;
+        if (n.x < x0 - 1 || n.x > x1 + 1 || n.y < y0 - 1 || n.y > y1 + 1) return;
         var bob = Math.sin(tempo / 620 + n.x * 1.7 + n.y) * 0.6;
-        A.desenharPersonagem(ctx, n.sprite, n.dir || 'baixo', 0,
-          n.x * TS + TS / 2, n.y * TS + TS - 2 + bob, 44);
+        atores.push({
+          pe: n.y * TS + TS - 2,
+          desenhar: function () {
+            sombra(n.x * TS + TS / 2, n.y * TS + TS - 3, 13);
+            A.desenharPersonagem(ctx, n.sprite, n.dir || 'baixo', 0,
+              n.x * TS + TS / 2, n.y * TS + TS - 2 + bob, 44);
+          }
+        });
       });
     }
+    var peJogador = py + TS / 2 - 2;
+    atores.push({
+      pe: peJogador,
+      desenhar: function () {
+        sombra(px, peJogador - 1, 14 - Math.abs(saltoPasso()) * 0.5);
+        A.desenharPersonagem(ctx, 'jogador', p.dir, quadroCaminhada(),
+          px, peJogador + saltoPasso(), 46);
+      }
+    });
+    atores.sort(function (a, b) { return a.pe - b.pe; });
 
-    /* jogador */
-    var frame = p.movendo ? [0, 1, 0, 3][p.animPasso] : 0;
-    A.desenharPersonagem(ctx, 'jogador', p.dir, frame, px, py + TS / 2 - 2, 46);
+    /* poeira dos passos fica abaixo de tudo que é sólido */
+    desenharPoeira();
 
-    /* grama alta cobre os pés */
-    coberturaGramaAlta(px, py);
+    var linhaDesenhada = Math.max(0, y0);
+    var fimLinha = Math.min(mapa.alt, y1 + 2);
+    atores.forEach(function (ator) {
+      var linhaAtor = Math.floor(ator.pe / TS);
+      if (linhaAtor > linhaDesenhada) {
+        faixaObjetos(linhaDesenhada, Math.min(linhaAtor, fimLinha));
+        linhaDesenhada = Math.min(linhaAtor, fimLinha);
+      }
+      ator.desenhar();
+    });
+    faixaObjetos(linhaDesenhada, fimLinha);
+
+    /* --------- 3b. a grama reage a quem passa por ela --------- */
+    desenharRoçado(px, peJogador);
+
+    /* --------- 4. partículas de ambiente --------- */
+    desenharAmbiente(camX, camY, pw, ph);
 
     ctx.restore();
 
@@ -425,23 +469,144 @@
     }
   }
 
-  function coberturaGramaAlta(px, py) {
-    var tx = Math.round((px - TS / 2) / TS), ty = Math.round((py - TS / 2) / TS);
-    for (var dy = 0; dy <= 1; dy++) {
-      var y = ty + dy;
-      if (y < 0 || y >= mapa.alt) continue;
-      for (var dx = -1; dx <= 1; dx++) {
-        var x = tx + dx;
-        if (x < 0 || x >= mapa.larg) continue;
-        if (mapa.grade[y][x] !== ',') continue;
-        var recorte = TS * 0.55;
-        var S = A.SUPER;
-        ctx.drawImage(estatico,
-          x * TS * S, (y * TS + TS - recorte) * S, TS * S, recorte * S,
-          x * TS, y * TS + TS - recorte, TS, recorte);
-      }
-    }
+  /* ------------------------------------------------------------------ */
+  /*  APOIO DE RENDERIZAÇÃO                                              */
+  /* ------------------------------------------------------------------ */
+
+  /* Desenha a camada de objetos entre duas linhas de tiles. Como as faixas
+     não se sobrepõem, nada é composto duas vezes. */
+  function faixaObjetos(de, ate) {
+    if (!objetos || ate <= de) return;
+    var S = A.SUPER;
+    var oy = de * TS, alt = (ate - de) * TS;
+    ctx.drawImage(objetos,
+      0, oy * S, objetos.width, alt * S,
+      0, oy, mapa.larg * TS, alt);
   }
+
+  /* Sombra de contato: separa o personagem do chão e dá peso à silhueta. */
+  function sombra(cx, cy, raio) {
+    ctx.save();
+    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, raio);
+    g.addColorStop(0, 'rgba(8,6,16,0.42)');
+    g.addColorStop(0.65, 'rgba(8,6,16,0.20)');
+    g.addColorStop(1, 'rgba(8,6,16,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, raio, raio * 0.42, 0, 0, 6.2832);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* Ciclo de caminhada de 4 tempos: contato, passagem, contato oposto,
+     passagem. O índice avança com o progresso do passo. */
+  function quadroCaminhada() {
+    if (!p.movendo) return 0;
+    return [1, 0, 3, 0][Math.floor(p.prog * 4) & 3];
+  }
+
+  /* Pequeno salto vertical no meio do passo — tira o deslize do movimento. */
+  function saltoPasso() {
+    if (!p.movendo) return 0;
+    return -Math.abs(Math.sin(p.prog * Math.PI)) * 1.7;
+  }
+
+  /* ------------------------------ poeira ------------------------------ */
+  var poeira = [];
+
+  function soltarPoeira(cx, cy, tipoTile) {
+    var qtd = tipoTile === ',' ? 3 : 2;
+    for (var i = 0; i < qtd; i++) {
+      poeira.push({
+        x: cx + (Math.random() - 0.5) * 9,
+        y: cy - Math.random() * 2,
+        vx: (Math.random() - 0.5) * 0.22,
+        vy: -0.06 - Math.random() * 0.1,
+        vida: 1,
+        r: 1.1 + Math.random() * 1.7,
+        folha: tipoTile === ','
+      });
+    }
+    if (poeira.length > 90) poeira.splice(0, poeira.length - 90);
+  }
+
+  function desenharPoeira() {
+    for (var i = poeira.length - 1; i >= 0; i--) {
+      var d = poeira[i];
+      d.x += d.vx; d.y += d.vy; d.vida -= 0.028;
+      if (d.vida <= 0) { poeira.splice(i, 1); continue; }
+      ctx.globalAlpha = d.vida * (d.folha ? 0.5 : 0.34);
+      ctx.fillStyle = d.folha ? '#8fd07a' : '#c9b48c';
+      ctx.beginPath();
+      ctx.ellipse(d.x, d.y, d.r * d.vida, d.r * d.vida * 0.75, 0, 0, 6.2832);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* Lâminas extras balançando no tile onde o jogador está pisando: dá a
+     leitura de estar ATRAVESSANDO o mato, não passando por cima dele. */
+  function desenharRoçado(cx, pe) {
+    var tx = Math.floor(cx / TS), ty = Math.floor(pe / TS);
+    if (ty < 0 || ty >= mapa.alt || tx < 0 || tx >= mapa.larg) return;
+    if (mapa.grade[ty][tx] !== ',') return;
+
+    var forca = p.movendo ? 1 : 0.32;
+    var base = ty * TS + TS;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(150,215,130,0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    for (var i = 0; i < 7; i++) {
+      var ang = (i / 7) * 6.2832 + tempo * 0.004;
+      var raio = 7 + (i % 3) * 3.5;
+      var bx = cx + Math.cos(ang) * raio;
+      var by = base - 3 - (i % 2) * 2;
+      var incl = Math.sin(tempo * 0.011 + i * 1.7) * 3.4 * forca;
+      var h = 7 + (i % 3) * 3;
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.quadraticCurveTo(bx + incl * 0.4, by - h * 0.6, bx + incl, by - h);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* --------------------------- ambiente ------------------------------- */
+  /* Partículas lentas que dão vida ao quadro parado. Cada ambiente tem as
+     suas: vaga-lumes na floresta, faíscas nas ruínas, pólen no campo. */
+  var AMBIENTE = {
+    floresta: { n: 26, cor: '#ffe9a0', r: 1.5, vel: 0.10, brilho: true },
+    ruinas:   { n: 30, cor: '#c9a6ff', r: 1.3, vel: 0.16, brilho: true },
+    campo:    { n: 18, cor: '#e8f0c0', r: 1.1, vel: 0.07, brilho: false },
+    lago:     { n: 16, cor: '#bfe4ff', r: 1.2, vel: 0.08, brilho: true },
+    montanha: { n: 20, cor: '#d8d8e8', r: 1.0, vel: 0.13, brilho: false },
+    vila:     { n: 12, cor: '#f0e0b8', r: 1.0, vel: 0.06, brilho: false }
+  };
+
+  function desenharAmbiente(camX, camY, pw, ph) {
+    var cfg = AMBIENTE[mapa.ambiente];
+    if (!cfg) return;
+    ctx.save();
+    if (cfg.brilho) ctx.globalCompositeOperation = 'lighter';
+    for (var i = 0; i < cfg.n; i++) {
+      /* movimento pseudoaleatório estável, derivado do índice e do tempo */
+      var f = i * 2.399;
+      var t1 = tempo * cfg.vel * 0.01;
+      var ax = ((Math.sin(f * 1.7 + t1 * 0.6) * 0.5 + 0.5) * 1.35 - 0.17) * pw;
+      var ay = ((Math.cos(f * 2.3 + t1 * 0.45) * 0.5 + 0.5) * 1.35 - 0.17) * ph;
+      var cintila = 0.35 + Math.abs(Math.sin(t1 * 2.2 + f)) * 0.65;
+      ctx.globalAlpha = cintila * 0.55;
+      ctx.fillStyle = cfg.cor;
+      ctx.beginPath();
+      ctx.arc(camX + ax, camY + ay, cfg.r * cintila, 0, 6.2832);
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+
 
   function desenharVinheta() {
     var g = ctx.createRadialGradient(

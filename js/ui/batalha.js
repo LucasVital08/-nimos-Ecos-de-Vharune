@@ -35,6 +35,15 @@
     ctx = cv.getContext('2d');
     elLog = G.el('#bt-log');
     elMenu = G.el('#bt-menu');
+    /* O menu é remontado por vários caminhos (raiz, técnicas, itens, troca).
+       Observar o container cobre todos eles sem depender de cada um lembrar
+       de reposicionar a seleção. */
+    if (G.Nav && !elMenu._observado) {
+      elMenu._observado = true;
+      new MutationObserver(function () {
+        if (ativo && !processando) G.Nav.revalidar(elMenu);
+      }).observe(elMenu, { childList: true, subtree: true });
+    }
 
     var aliado = E.primeiroApto();
     if (!aliado) { UI.toast('Nenhum Ânimo consegue lutar.', 'aviso'); return; }
@@ -677,6 +686,7 @@
   function encerrar(resultado) {
     if (!ativo) return;
     ativo = false;
+    if (G.Nav) G.Nav.limpar();
     limparMenu(true);
 
     function sair() {
@@ -774,21 +784,35 @@
   UB.tecla = function (ev) {
     if (!ativo) return false;
     var k = ev.key.toLowerCase();
+
+    /* Enquanto a animação do turno roda, avançar texto é o único comando. */
     if (processando) {
+      if (k === 'enter' || k === ' ' || k === 'e') ev.preventDefault();
       return true;
     }
+
+    /* Atalho numérico continua valendo para quem já decorou. */
     var botoes = G.els('button:not(:disabled)', elMenu);
     if (k >= '1' && k <= '9') {
       var i = parseInt(k, 10) - 1;
       if (botoes[i]) { ev.preventDefault(); botoes[i].click(); }
       return true;
     }
+
     if (k === 'escape' || k === 'backspace') {
       ev.preventDefault();
       if (menuEstado !== 'raiz') mostrarMenuRaiz();
       return true;
     }
+
+    /* Setas e WASD movem a seleção; Enter e Espaço confirmam. */
+    if (G.Nav && G.Nav.tecla(ev, elMenu)) return true;
     return true;
+  };
+
+  /* Reaponta a seleção sempre que o menu de batalha é redesenhado. */
+  UB.focar = function () {
+    if (G.Nav) setTimeout(function () { G.Nav.revalidar(elMenu); }, 0);
   };
 
 })(window.ANIMOS);

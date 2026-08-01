@@ -119,15 +119,18 @@
       });
     }
     painelAberto.render = render;
+    if (G.Nav) setTimeout(function () { G.Nav.entrar(G.el('#painel')); }, 0);
     render(atual);
   };
 
   UI.recarregarPainel = function () {
     if (painelAberto && painelAberto.render) painelAberto.render(painelAberto.aba);
+    if (G.Nav) setTimeout(function () { G.Nav.revalidar(G.el('#painel')); }, 0);
   };
 
   UI.fecharPainel = function () {
     if (!painelAberto) return;
+    if (G.Nav) G.Nav.limpar();
     var cb = painelAberto.aoFechar;
     painelAberto = null;
     elPainel.classList.add('oculto');
@@ -308,8 +311,17 @@
   /* Devolve true se a UI consumiu a tecla (o mapa então ignora). */
   UI.capturaTeclado = function (ev) {
     var k = ev.key.toLowerCase();
+    var Nav = G.Nav;
+
+    /* Campo de texto em foco: as teclas são dele. */
+    var foco = document.activeElement;
+    if (foco && (foco.tagName === 'INPUT' || foco.tagName === 'TEXTAREA')) {
+      return k !== 'escape';
+    }
+
     if (modalAberto) {
       if (k === 'escape') { UI.fecharModal(); return true; }
+      if (Nav && Nav.tecla(ev, G.el('#modal-caixa') || document.body)) return true;
       return true;
     }
     if (G.UIBatalha && G.UIBatalha.ativa()) {
@@ -324,6 +336,7 @@
     }
     if (painelAberto) {
       if (k === 'escape' || k === 'm' || k === 'backspace') { ev.preventDefault(); UI.fecharPainel(); return true; }
+      if (Nav && Nav.tecla(ev, G.el('#painel'))) return true;
       return true;
     }
     if (k === 'm' || k === 'escape') { ev.preventDefault(); G.Telas.menuPrincipal(); return true; }

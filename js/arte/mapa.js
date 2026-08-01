@@ -68,22 +68,25 @@
       ctx.quadraticCurveTo(nx + 1.5, ny - 3, nx + (n2(x, y, 140 + i) - 0.5) * 4, ny - 5.5);
       ctx.stroke();
     }
-    if (alta) {
-      /* lâminas altas: mais escuras na base, claras na ponta */
-      for (i = 0; i < 11; i++) {
-        nx = px + 1 + n2(x, y, 200 + i) * (TS - 2);
-        ny = py + TS - 1;
-        var h = 12 + n2(x, y, 220 + i) * 13;
-        var curva = (n2(x, y, 240 + i) - 0.5) * 9;
-        ctx.beginPath();
-        ctx.moveTo(nx - 2.2, ny);
-        ctx.quadraticCurveTo(nx + curva * 0.4, ny - h * 0.6, nx + curva, ny - h);
-        ctx.quadraticCurveTo(nx + curva * 0.5, ny - h * 0.55, nx + 2.2, ny);
-        ctx.closePath();
-        var l = pal.grama2[2] + (i % 3) * 4;
-        ctx.fillStyle = U.css([pal.grama2[0] + (n2(x, y, 260 + i) - 0.5) * 12, pal.grama2[1], l]);
-        ctx.fill();
-      }
+    if (alta) laminasAltas(ctx, px, py, x, y, pal);
+  }
+
+  /* Só as lâminas da grama alta, sem o tile de fundo. Vive na camada de
+     objetos para cobrir os pés de quem atravessa. */
+  function laminasAltas(ctx, px, py, x, y, pal) {
+    for (var i = 0; i < 11; i++) {
+      var nx = px + 1 + n2(x, y, 200 + i) * (TS - 2);
+      var ny = py + TS - 1;
+      var h = 12 + n2(x, y, 220 + i) * 13;
+      var curva = (n2(x, y, 240 + i) - 0.5) * 9;
+      ctx.beginPath();
+      ctx.moveTo(nx - 2.2, ny);
+      ctx.quadraticCurveTo(nx + curva * 0.4, ny - h * 0.6, nx + curva, ny - h);
+      ctx.quadraticCurveTo(nx + curva * 0.5, ny - h * 0.55, nx + 2.2, ny);
+      ctx.closePath();
+      var l = pal.grama2[2] + (i % 3) * 4;
+      ctx.fillStyle = U.css([pal.grama2[0] + (n2(x, y, 260 + i) - 0.5) * 12, pal.grama2[1], l]);
+      ctx.fill();
     }
   }
 
@@ -498,6 +501,17 @@
     ctx.scale(S, S);
     ctx.imageSmoothingEnabled = true;
 
+    /* Segunda camada, transparente, só com o que fica ACIMA do chão: árvores,
+       paredes, telhados, rochas, pilares. Ela é desenhada em faixas, ordenada
+       contra os personagens, e é isso que faz o jogador passar ATRÁS de uma
+       árvore que está à frente dele em vez de por cima. */
+    var cvObj = document.createElement('canvas');
+    cvObj.width = cv.width; cvObj.height = cv.height;
+    var ctxObj = cvObj.getContext('2d');
+    ctxObj.scale(S, S);
+    ctxObj.imageSmoothingEnabled = true;
+    ctxObj.lineJoin = 'round';
+
     var aguas = [];
     var x, y, t, px, py;
 
@@ -539,25 +553,29 @@
         t = mapa.grade[y][x];
         px = x * TS; py = y * TS;
         switch (t) {
-          case ',': grama(ctx, px, py, x, y, pal, true); break;
+          /* Tiles caminháveis ficam no CHÃO: se fossem para a camada de
+             objetos, tapariam o jogador que anda em cima deles. */
           case ':': nevoaEter(ctx, px, py, x, y, pal); break;
           case 'F': flores(ctx, px, py, x, y, pal); break;
-          case 'T': arvore(ctx, px, py, x, y, pal, mapa.ambiente === 'floresta'); break;
-          case 'Y': arbusto(ctx, px, py, x, y, pal); break;
-          case 'R': rocha(ctx, px, py, x, y); break;
-          case 'M': penhasco(ctx, px, py, x, y, y > 0 && !!G.ANDAVEL[mapa.grade[y - 1][x]]); break;
-          case '#': parede(ctx, px, py, x, y); break;
-          case 'B': telhado(ctx, px, py, x, y, false); break;
-          case 'b': telhado(ctx, px, py, x, y, true); break;
-          case 'D': porta(ctx, px, py); break;
-          case 'G': placa(ctx, px, py, pal); break;
-          case 'P': pilar(ctx, px, py, x, y); break;
           case 'p': ponte(ctx, px, py, x, y); break;
-          case 'f': cerca(ctx, px, py); break;
-          case 'L': poste(ctx, px, py); break;
-          case 'c': engradado(ctx, px, py); break;
           case 'n': toco(ctx, px, py, pal); break;
-          case 'x': cristal(ctx, px, py, x, y); break;
+          /* Da grama alta vão para a camada de objetos SÓ as lâminas, para
+             que elas cubram os pés de quem passa sem tapar o corpo. */
+          case ',': laminasAltas(ctxObj, px, py, x, y, pal); break;
+          case 'T': arvore(ctxObj, px, py, x, y, pal, mapa.ambiente === 'floresta'); break;
+          case 'Y': arbusto(ctxObj, px, py, x, y, pal); break;
+          case 'R': rocha(ctxObj, px, py, x, y); break;
+          case 'M': penhasco(ctxObj, px, py, x, y, y > 0 && !!G.ANDAVEL[mapa.grade[y - 1][x]]); break;
+          case '#': parede(ctxObj, px, py, x, y); break;
+          case 'B': telhado(ctxObj, px, py, x, y, false); break;
+          case 'b': telhado(ctxObj, px, py, x, y, true); break;
+          case 'D': porta(ctxObj, px, py); break;
+          case 'G': placa(ctxObj, px, py, pal); break;
+          case 'P': pilar(ctxObj, px, py, x, y); break;
+          case 'f': cerca(ctxObj, px, py); break;
+          case 'L': poste(ctxObj, px, py); break;
+          case 'c': engradado(ctxObj, px, py); break;
+          case 'x': cristal(ctxObj, px, py, x, y); break;
         }
       }
     }
@@ -587,14 +605,16 @@
       montanha: 'rgba(120,120,150,0.12)'
     }[mapa.ambiente];
     if (clima) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'multiply';
-      ctx.fillStyle = clima;
-      ctx.fillRect(0, 0, mapa.larg * TS, mapa.alt * TS);
-      ctx.restore();
+      [ctx, ctxObj].forEach(function (c) {
+        c.save();
+        c.globalCompositeOperation = 'multiply';
+        c.fillStyle = clima;
+        c.fillRect(0, 0, mapa.larg * TS, mapa.alt * TS);
+        c.restore();
+      });
     }
 
-    return { canvas: cv, aguas: aguas, pal: pal, escala: S };
+    return { canvas: cv, objetos: cvObj, aguas: aguas, pal: pal, escala: S };
   };
 
   /* ------------------------- água animada --------------------------- */

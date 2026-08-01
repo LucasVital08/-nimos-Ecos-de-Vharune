@@ -27,8 +27,20 @@
     ligarControles();
   });
 
+  /* Telas de fora do mundo (título, intro, escolha do inicial) também são
+     navegáveis por teclado — o jogo inteiro tem que funcionar sem mouse. */
+  function focarTela(id) {
+    if (!G.Nav) return;
+    var el = G.el('#' + id);
+    if (!el) return;
+    setTimeout(function () { G.Nav.entrar(el); }, 30);
+  }
+
   function mostrarTela(id) {
     G.els('.tela').forEach(function (t) { t.classList.toggle('ativa', t.id === id); });
+    /* No mundo as setas andam, então lá não existe seleção de botão. */
+    if (id === 'tela-jogo') { if (G.Nav) G.Nav.limpar(); }
+    else focarTela(id);
   }
 
   /* ==================================================================== */

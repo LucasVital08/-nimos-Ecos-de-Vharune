@@ -27,7 +27,18 @@
   }
 
   function corpo(ctx, p, dir, frame, tipo) {
+    /* Ciclo de caminhada de 4 tempos:
+         0 = passagem (pernas juntas, corpo no alto)
+         1 = contato com a perna esquerda à frente
+         2 = passagem oposta
+         3 = contato com a perna direita à frente
+       passo dá o deslocamento das pernas, agacha abaixa o corpo no contato
+       (é o que tira a sensação de deslizar) e balanco move os braços em
+       oposição às pernas. */
     var passo = frame === 1 ? 1 : (frame === 3 ? -1 : 0);
+    var contato = (frame === 1 || frame === 3);
+    var agacha = contato ? 0.9 : 0;
+    var balanco = -passo;
     var LN = 'rgba(24,20,32,0.85)';
     var cx = 16, base = 30;
     var alto = tipo === 'crianca' ? 0.82 : 1;
@@ -38,17 +49,21 @@
     ctx.scale(esc, esc);
     ctx.translate(-cx, -base);
 
-    /* sombra */
-    el(ctx, cx, base + 0.5, 7.5, 2.6, 0);
-    ctx.fillStyle = 'rgba(15,12,22,0.30)'; ctx.fill();
+    /* A sombra não é mais desenhada aqui: quem cuida dela é o mundo, que a
+       ajusta conforme o salto do passo. */
 
-    /* pernas */
+    /* pernas — a da frente encurta um pouco, dando dobra de joelho */
+    var pernaE = 8 - Math.max(0, passo) * 1.1;
+    var pernaD = 8 - Math.max(0, -passo) * 1.1;
     ctx.fillStyle = U.css(p.roupa2);
-    ctx.fillRect(cx - 4.6 + passo * 1.1, base - 8, 3.6, 8);
-    ctx.fillRect(cx + 1.0 - passo * 1.1, base - 8, 3.6, 8);
+    ctx.fillRect(cx - 4.6 + passo * 1.6, base - pernaE, 3.6, pernaE);
+    ctx.fillRect(cx + 1.0 - passo * 1.6, base - pernaD, 3.6, pernaD);
     ctx.fillStyle = U.css(U.tom(p.roupa2, -14));
-    ctx.fillRect(cx - 4.8 + passo * 1.1, base - 1.8, 4.0, 2.2);
-    ctx.fillRect(cx + 0.8 - passo * 1.1, base - 1.8, 4.0, 2.2);
+    ctx.fillRect(cx - 4.8 + passo * 1.6, base - 1.8, 4.0, 2.2);
+    ctx.fillRect(cx + 0.8 - passo * 1.6, base - 1.8, 4.0, 2.2);
+
+    /* o tronco inteiro desce no contato e inclina de leve para a frente */
+    ctx.translate(0, agacha);
 
     /* tronco / manto */
     ctx.beginPath();
@@ -68,16 +83,16 @@
       ctx.fillStyle = U.css(p.det); ctx.fill();
     }
 
-    /* braços */
+    /* braços — balançam em oposição às pernas */
     ctx.fillStyle = U.css(U.tom(p.roupa, -8));
-    ctx.fillRect(cx - 7.6, base - 17 + passo * 0.8, 2.6, 8);
-    ctx.fillRect(cx + 5.0, base - 17 - passo * 0.8, 2.6, 8);
+    ctx.fillRect(cx - 7.6 + balanco * 0.7, base - 17 + balanco * 1.4, 2.6, 8);
+    ctx.fillRect(cx + 5.0 - balanco * 0.7, base - 17 - balanco * 1.4, 2.6, 8);
     ctx.fillStyle = U.css(p.pele);
-    el(ctx, cx - 6.3, base - 9 + passo * 0.8, 1.7, 1.7, 0); ctx.fill();
-    el(ctx, cx + 6.3, base - 9 - passo * 0.8, 1.7, 1.7, 0); ctx.fill();
+    el(ctx, cx - 6.3 + balanco * 0.7, base - 9 + balanco * 1.4, 1.7, 1.7, 0); ctx.fill();
+    el(ctx, cx + 6.3 - balanco * 0.7, base - 9 - balanco * 1.4, 1.7, 1.7, 0); ctx.fill();
 
     /* cabeça */
-    var hy = base - 23.5;
+    var hy = base - 23.5 - agacha * 0.35;
     el(ctx, cx, hy, 6.0, 6.2, 0);
     ctx.fillStyle = U.css(p.pele); ctx.fill();
     ctx.strokeStyle = LN; ctx.lineWidth = 0.8; ctx.stroke();
