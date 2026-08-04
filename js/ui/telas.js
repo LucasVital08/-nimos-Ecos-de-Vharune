@@ -745,7 +745,7 @@
       algum = true;
 
       var d = G.criar('div', 'besta ' + st);
-      var v = { seed: esp.num * 977, matiz: 0, padrao: 'liso', porte: 1, prismatico: false };
+      var v = G.Arte.variacaoCanonica(esp);
       if (st === 'desconhecido') {
         var img = UI.imgEspecie(esp.id, v, 86);
         img.style.filter = 'brightness(0) opacity(.30)';
@@ -815,7 +815,7 @@
         id: 'ficha', nome: 'Ficha', render: function (corpo, rodape) {
           var grade = G.criar('div', 'detalhe');
           var arte = G.criar('div', 'det-arte');
-          arte.appendChild(UI.imgEspecie(id, { seed: esp.num * 977, matiz: 0, padrao: 'liso', porte: 1 }, 210));
+          arte.appendChild(UI.imgEspecie(id, G.Arte.variacaoCanonica(esp), 210));
           arte.appendChild(G.criar('div', 'det-nome', esp.nome));
           arte.appendChild(G.criar('div', 'det-cat', esp.categoria));
           var tipos = G.criar('div', 'det-tipos');

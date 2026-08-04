@@ -277,6 +277,12 @@
       if (ev.key === 'Enter' && escolhido) comecarJogo();
     });
 
+    /* Adianta os retratos em tempo ocioso: sem isso, a primeira abertura do
+       bestiário paga o desenho das 28 de uma vez. */
+    if (G.Arte.aquecerCache) {
+      G.Arte.aquecerCache(G.LISTA_ESPECIES);
+    }
+
     G.el('#btn-menu').addEventListener('click', function () { T.menuPrincipal(); });
     G.el('#btn-mapa').addEventListener('click', function () { G.Telas.mapaMundi(); });
     G.el('#btn-b').addEventListener('click', function () { T.menuPrincipal(); });

@@ -1456,6 +1456,11 @@
     fn(ctx, P, o, rnd);
     ctx.restore();
 
+    /* Iluminação por normal map, derivada da própria silhueta desenhada.
+       Entra ANTES do padrão individual: o padrão é marca de pele, não deve
+       gerar relevo — senão cada mancha viraria uma saliência. */
+    if (G.Luz) G.Luz.aplicar(ctx, LADO, LADO, art.luz);
+
     /* padrão individual + prismático (aplicados sobre a silhueta) */
     var rnd2 = G.mulberry32((v.seed | 0) * 7 + 13);
     aplicarPadrao(ctx, v.padrao, P, rnd2);
@@ -1522,6 +1527,33 @@
     URL_ORDEM.push(chave);
     if (URL_ORDEM.length > CACHE_MAX) delete CACHE_URL[URL_ORDEM.shift()];
     return url;
+  };
+
+  /* Desenhar um retrato com iluminação custa ~60ms. Abrir o bestiário com as
+     28 espécies de uma vez congelava a interface por ~2s. Aqui adiantamos o
+     trabalho em tempo ocioso, um por vez, para que a tela abra já com tudo
+     em cache. Se o navegador estiver ocupado, ele simplesmente não nos chama —
+     que é exatamente o comportamento desejado. */
+  /* Variação canônica de uma espécie: é a que o bestiário e as fichas usam.
+     Precisa ser a MESMA em todo lugar, senão o cache nunca acerta — foi
+     exatamente o que aconteceu quando o aquecimento usava seed 1 e o
+     bestiário usava num*977: 28 entradas geradas, zero aproveitadas. */
+  A.variacaoCanonica = function (esp) {
+    return { seed: esp.num * 977, matiz: 0, padrao: 'liso', porte: 1, prismatico: false };
+  };
+
+  A.aquecerCache = function (especies) {
+    var fila = (especies || []).slice();
+    /* Uma por vez, via setTimeout. requestIdleCallback quase nunca recebe
+       tempo aqui, porque o mundo roda um requestAnimationFrame contínuo —
+       medido: em 4s de "ociosidade" ele mal aqueceu o cache. */
+    function passo() {
+      if (!fila.length) return;
+      var esp = fila.shift();
+      try { A.dataURL(esp.id, A.variacaoCanonica(esp)); } catch (e) { /* segue */ }
+      setTimeout(passo, 0);
+    }
+    setTimeout(passo, 0);
   };
 
   A.limparCache = function () { CACHE = {}; CACHE_ORDEM = []; CACHE_URL = {}; URL_ORDEM = []; };
