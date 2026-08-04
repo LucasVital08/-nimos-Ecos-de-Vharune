@@ -1548,14 +1548,21 @@
 
   /* Rebaixa a resolução de amostragem se a máquina não der conta. A 2x o
      rasterizador trabalha em 512² e guarda alguns megabytes de buffer; num
-     aparelho lento isso trava a interface no primeiro retrato. Medimos o
-     primeiro e decidimos — melhor uma borda um pouco mais dura do que o jogo
-     engasgando ao abrir o bestiário. */
-  var medidos = 0;
+     aparelho lento isso trava a interface no primeiro retrato.
+
+     Decidir pelo PRIMEIRO retrato era errado, e dava errado na prática: ele
+     paga sozinho a alocação dos buffers e costuma disputar a CPU com a
+     animação da tela de título, então uma máquina folgada era rebaixada por
+     um único quadro azarado. Agora são três amostras, e só cai de resolução
+     se pelo menos duas passarem do limite. */
+  var amostras = [];
   function aferir(ms) {
-    if (medidos >= 3 || A.SUPER < 2) { medidos++; return; }
-    medidos++;
-    if (ms > 320) A.SUPER = 1;
+    if (A.SUPER < 2 || amostras.length >= 3) return;
+    amostras.push(ms);
+    if (amostras.length < 3) return;
+    var lentos = 0;
+    for (var i = 0; i < 3; i++) if (amostras[i] > 420) lentos++;
+    if (lentos >= 2) A.SUPER = 1;
   }
 
   function desenhar3D(esp, v) {
