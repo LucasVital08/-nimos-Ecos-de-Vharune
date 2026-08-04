@@ -110,9 +110,45 @@ Dois indivíduos da mesma espécie **nunca saem iguais**. Cada um combina:
   Degradê e Estelar, aplicados só sobre a silhueta da criatura;
 - **desvio de matiz** de ±17°;
 - **porte** entre 90% e 112%;
-- variante **Prismática** rara (≈1 em 480), com paleta deslocada e brilho.
+- variante **Prismática** rara (≈1 em 480), com paleta deslocada e brilho;
+- **postura própria** — inclinação da cabeça, curva do pescoço, balanço da
+  cauda e abertura das asas saem da mesma semente.
 
 Em uma amostra de 400 Pardalumes gerados, 397 aparências distintas.
+
+### Os Ânimos são modelos 3D, construídos em tempo de execução
+
+Nenhum arquivo de modelo, textura ou imagem entra no repositório: cada Ânimo é
+uma **malha** montada na hora — vértices, triângulos e normais reais — e
+desenhada por um rasterizador próprio, escrito em JavaScript puro, sem WebGL e
+sem dependência.
+
+O que o motor faz por retrato:
+
+| Etapa | O que entrega |
+|---|---|
+| Malha procedural | coluna contínua da cauda à nuca, crânio com arcada e focinho, membro digitígrado, asa de dedos e membrana |
+| Mapa de sombra | sombra projetada de verdade: a asa escurece o dorso, o queixo escurece o peito |
+| G-buffer diferido | cada pixel é sombreado uma vez só, mesmo com muita sobreposição |
+| Oclusão em espaço de tela | fecha as dobras, o vão sob a mandíbula e o espaço entre as pernas |
+| Relevo procedural | escama, placa ventral, pena, quitina, rocha, cristal e couro como campo de altura com derivada analítica — relevo sem custo de geometria |
+| Passe translúcido | membrana de asa, geleia, névoa e véu, ordenados de trás para a frente |
+| Supersampling 2× | borda limpa, inclusive no alfa; cai para 1× sozinho em máquina lenta |
+| Florescer | chama, cristal e olho aceso vazam luz para fora da silhueta |
+
+Fogo, raio, névoa e faísca continuam pintados em 2D por cima, ancorados em
+pontos do modelo projetados na tela — é o que um motor 3D também faria: efeito
+sem superfície não vira geometria.
+
+A **anatomia é dracônica**, mas conjugada pelo estereótipo que cada espécie já
+tinha: o Verdil é um filhote de corpo curto com broto de folha; o Fagulho tem
+fendas quentes entre as escamas; o Terrino não tem coluna, é cascalho empilhado
+que decidiu andar; o Noctun não tem pele, tem densidade que some na borda; o
+Falcéu tem pena com raque e barbas; o Aciarno afunda no próprio peso.
+
+Custo medido: **30–170 ms por retrato**, uma vez só — o resultado vai para
+cache de canvas e de PNG. A arte 2D anterior continua no repositório e assume
+sozinha se o motor 3D falhar em qualquer navegador.
 
 ### Aspectos do éter (tipos)
 
@@ -214,7 +250,12 @@ js/data/tecnicas.js        62 técnicas e as 5 condições de estado
 js/data/especies.js        as 28 espécies (atributos, evolução, arte, aprendizado)
 js/data/itens.js           23 itens em 5 categorias
 js/data/mundo.js           os 6 mapas, NPCs, portais, placas e encontros
-js/arte/criaturas.js       desenho procedural das criaturas (9 arquétipos)
+js/arte/malha3d.js         construção de malha 3D (loft por spline, retalho, faceta)
+js/arte/render3d.js        rasterizador por software: z-buffer, sombra, relevo, AO
+js/arte/anatomia3d.js      vocabulário anatômico (coluna, crânio, membro, asa, crista)
+js/arte/especies3d.js      arquétipos corporais e o perfil 3D de cada espécie
+js/arte/luz.js             sombreamento por normal map (usado pela arte 2D de reserva)
+js/arte/criaturas.js       retratos: monta a cena 3D, compõe sombra e efeitos, cacheia
 js/arte/mapa.js            desenho procedural dos tiles e da água animada
 js/arte/personagens.js     sprites de personagens e ícones de item
 js/motor/criatura.js       atributos, XP, evolução, cuidado

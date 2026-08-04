@@ -1423,6 +1423,171 @@
     ctx.restore();
   }
 
+  /* ========================= EFEITOS EM TELA ===========================
+     Chama, raio, halo, névoa e faísca continuam sendo pintados em 2D, por
+     cima da criatura já renderizada, usando as âncoras que o renderizador
+     devolve projetadas. Não é atalho: fogo e névoa não têm superfície, então
+     modelá-los como malha custaria caro e ficaria pior. É o mesmo caminho que
+     um motor 3D toma quando resolve efeito por bilhete em vez de geometria. */
+
+  function halo(ctx, x, y, r, cor, forca) {
+    var g = ctx.createRadialGradient(x, y, r * 0.05, x, y, r);
+    g.addColorStop(0, U.css(cor, 0.55 * forca));
+    g.addColorStop(0.45, U.css(cor, 0.20 * forca));
+    g.addColorStop(1, U.css(cor, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* Língua de fogo com gradiente ao longo do eixo: opaca na base, sumindo na
+     ponta. Preenchimento chapado dava um triângulo recortado colado no bicho. */
+  function lingua(ctx, x, y, alt, larg, cor, alfa, fase) {
+    ctx.beginPath();
+    ctx.moveTo(x - larg, y);
+    ctx.quadraticCurveTo(x - larg * 0.62, y - alt * 0.55,
+                         x + Math.sin(fase) * larg * 0.5, y - alt);
+    ctx.quadraticCurveTo(x + larg * 0.72, y - alt * 0.5, x + larg, y);
+    ctx.closePath();
+    var g = ctx.createLinearGradient(x, y, x, y - alt);
+    g.addColorStop(0, U.css(cor, alfa));
+    g.addColorStop(0.55, U.css(cor, alfa * 0.55));
+    g.addColorStop(1, U.css(cor, 0));
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+
+  function vfxAtras(ctx, lista, anc, pal, rnd) {
+    lista.forEach(function (e) {
+      var a = anc[e.anc];
+      if (!a) return;
+      var r = 16 * e.r;
+      if (e.tipo === 'chama') halo(ctx, a.x, a.y - r * 0.25, r * 1.5, U.tom(pal.c3, 4), 0.85);
+      else if (e.tipo === 'halo') halo(ctx, a.x, a.y, r * 1.7, U.tom(pal.c3, 8), 0.75);
+      else if (e.tipo === 'raio') halo(ctx, a.x, a.y, r * 1.4, U.tom(pal.c3, 6), 0.6);
+      else if (e.tipo === 'nevoa') {
+        ctx.save();
+        for (var k = 0; k < 4; k++) {
+          ctx.globalAlpha = 0.20 - k * 0.03;
+          ctx.beginPath();
+          ctx.ellipse(a.x + (rnd() - 0.5) * r, a.y + k * r * 0.34,
+                      r * (1.1 - k * 0.12), r * (0.42 - k * 0.05), 0, 0, Math.PI * 2);
+          ctx.fillStyle = U.css(pal.c1, 0.9);
+          ctx.fill();
+        }
+        ctx.restore();
+      } else if (e.tipo === 'faisca') halo(ctx, a.x, a.y, r * 1.6, U.tom(pal.c3, 2), 0.42);
+    });
+  }
+
+  function vfxFrente(ctx, lista, anc, pal, rnd) {
+    lista.forEach(function (e) {
+      var a = anc[e.anc];
+      if (!a) return;
+      var r = 15 * e.r, i;
+      if (e.tipo === 'chama') {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (i = 0; i < 4; i++) {
+          var fx = a.x + (rnd() - 0.5) * r * 0.5;
+          var fy = a.y - r * 0.1 - i * r * 0.10;
+          lingua(ctx, fx, fy, r * (1.05 - i * 0.18), r * (0.30 - i * 0.045),
+                 i < 2 ? U.tom(pal.c3, 6) : [45, 96, 84], 0.34 - i * 0.06, rnd() * 3);
+        }
+        ctx.restore();
+      } else if (e.tipo === 'raio') {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = U.css(U.tom(pal.c3, 20), 0.62);
+        ctx.lineWidth = 1.0;
+        ctx.lineCap = 'round';
+        for (i = 0; i < 2; i++) {
+          ctx.beginPath();
+          var px = a.x + (rnd() - 0.5) * r * 1.3, py = a.y + (rnd() - 0.5) * r;
+          ctx.moveTo(px, py);
+          for (var k = 0; k < 3; k++) {
+            px += (rnd() - 0.5) * r * 0.5;
+            py -= rnd() * r * 0.3;
+            ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else if (e.tipo === 'faisca' || e.tipo === 'bolha' || e.tipo === 'gota') {
+        ctx.save();
+        if (e.tipo === 'faisca') ctx.globalCompositeOperation = 'lighter';
+        for (i = 0; i < 7; i++) {
+          var s = 0.6 + rnd() * 1.4;
+          var ang = rnd() * Math.PI * 2, d = r * (0.6 + rnd() * 1.1);
+          ctx.beginPath();
+          ctx.arc(a.x + Math.cos(ang) * d, a.y + Math.sin(ang) * d * 0.8, s, 0, Math.PI * 2);
+          ctx.fillStyle = e.tipo === 'gota'
+            ? U.css(pal.c2, 0.6)
+            : U.css(U.tom(pal.c3, 16), e.tipo === 'faisca' ? 0.85 : 0.5);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    });
+  }
+
+  /* ========================== MOTOR 3D ================================ */
+
+  /* Ligado por padrão quando os módulos existem. Qualquer falha — navegador
+     antigo, canvas contaminado, malha degenerada — cai para a arte 2D, que
+     continua completa e no repositório. Um bicho a menos nunca é aceitável;
+     um bicho renderizado do jeito antigo é. */
+  A.motor3d = true;
+  A.SUPER = 2;
+
+  function temMotor3d() {
+    return !!(A.motor3d && G.Malha3D && G.Render3D && G.Anatomia3D && G.Especies3D);
+  }
+  A.temMotor3d = temMotor3d;
+
+  /* Rebaixa a resolução de amostragem se a máquina não der conta. A 2x o
+     rasterizador trabalha em 512² e guarda alguns megabytes de buffer; num
+     aparelho lento isso trava a interface no primeiro retrato. Medimos o
+     primeiro e decidimos — melhor uma borda um pouco mais dura do que o jogo
+     engasgando ao abrir o bestiário. */
+  var medidos = 0;
+  function aferir(ms) {
+    if (medidos >= 3 || A.SUPER < 2) { medidos++; return; }
+    medidos++;
+    if (ms > 320) A.SUPER = 1;
+  }
+
+  function desenhar3D(esp, v) {
+    var t0 = (window.performance && performance.now) ? performance.now() : 0;
+    var cena = G.Especies3D.construir(esp, v);
+    var r = G.Render3D.render(cena, { lado: LADO, super: A.SUPER });
+    if (t0) aferir(performance.now() - t0);
+
+    var cv = document.createElement('canvas');
+    cv.width = LADO; cv.height = LADO;
+    var ctx = cv.getContext('2d');
+    var rnd = G.mulberry32((v.seed | 0) * 131 + 29);
+    var pal = cena.paleta;
+
+    ctx.save();
+    ctx.scale(ESC, ESC);
+    ctx.lineJoin = 'round';
+    /* sombra de contato: sai da caixa projetada, então acompanha o porte */
+    var meia = (r.caixa.x1 - r.caixa.x0) * 0.5;
+    sombra(ctx, (r.caixa.x0 + r.caixa.x1) / 2, r.caixa.y1 - 1.5, Math.max(12, meia * 1.05));
+    vfxAtras(ctx, cena.vfx, r.ancoras, pal, rnd);
+    ctx.restore();
+
+    ctx.drawImage(r.canvas, 0, 0);
+
+    ctx.save();
+    ctx.scale(ESC, ESC);
+    vfxFrente(ctx, cena.vfx, r.ancoras, pal, G.mulberry32((v.seed | 0) * 977 + 5));
+    ctx.restore();
+    return cv;
+  }
+
   /* ============================== API ================================= */
 
   /* Constrói (ou recupera do cache) o canvas de um indivíduo. */
@@ -1435,31 +1600,45 @@
     var esp = G.especie(especieId);
     if (!esp) return null;
     var art = esp.art, o = art.o;
-
-    var cv = document.createElement('canvas');
-    cv.width = LADO; cv.height = LADO;
-    var ctx = cv.getContext('2d');
-    ctx.scale(ESC, ESC);
-    ctx.lineJoin = 'round';
-
     var P = montarPaleta(art, v);
-    var rnd = G.mulberry32((v.seed | 0) + G.hash32(especieId));
+    var cv = null, ctx = null;
 
-    /* porte individual */
-    var esc = (o.escala || 1) * (v.porte || 1);
-    ctx.save();
-    ctx.translate(50, 96);
-    ctx.scale(esc, esc);
-    ctx.translate(-50, -96);
+    if (temMotor3d()) {
+      try {
+        cv = desenhar3D(esp, v);
+        ctx = cv.getContext('2d');
+        ctx.scale(ESC, ESC);
+      } catch (e) {
+        if (window.console) console.warn('[arte] 3D falhou em ' + especieId + ', usando 2D:', e);
+        cv = null;
+      }
+    }
 
-    var fn = ARQ[art.arch] || ARQ.quadrupede;
-    fn(ctx, P, o, rnd);
-    ctx.restore();
+    if (!cv) {
+      cv = document.createElement('canvas');
+      cv.width = LADO; cv.height = LADO;
+      ctx = cv.getContext('2d');
+      ctx.scale(ESC, ESC);
+      ctx.lineJoin = 'round';
 
-    /* Iluminação por normal map, derivada da própria silhueta desenhada.
-       Entra ANTES do padrão individual: o padrão é marca de pele, não deve
-       gerar relevo — senão cada mancha viraria uma saliência. */
-    if (G.Luz) G.Luz.aplicar(ctx, LADO, LADO, art.luz);
+      var rnd = G.mulberry32((v.seed | 0) + G.hash32(especieId));
+
+      /* porte individual */
+      var esc = (o.escala || 1) * (v.porte || 1);
+      ctx.save();
+      ctx.translate(50, 96);
+      ctx.scale(esc, esc);
+      ctx.translate(-50, -96);
+
+      var fn = ARQ[art.arch] || ARQ.quadrupede;
+      fn(ctx, P, o, rnd);
+      ctx.restore();
+
+      /* Iluminação por normal map, derivada da própria silhueta desenhada.
+         Entra ANTES do padrão individual: o padrão é marca de pele, não deve
+         gerar relevo — senão cada mancha viraria uma saliência. */
+      if (G.Luz) G.Luz.aplicar(ctx, LADO, LADO, art.luz);
+    }
 
     /* padrão individual + prismático (aplicados sobre a silhueta) */
     var rnd2 = G.mulberry32((v.seed | 0) * 7 + 13);
@@ -1548,7 +1727,13 @@
        tempo aqui, porque o mundo roda um requestAnimationFrame contínuo —
        medido: em 4s de "ociosidade" ele mal aqueceu o cache. */
     function passo() {
-      if (!fila.length) return;
+      if (!fila.length) {
+        /* Os buffers do rasterizador somam alguns megabytes e só servem
+           enquanto há retrato para gerar. Com o cache quente, devolvê-los é
+           de graça: o próximo render realoca em um quadro. */
+        if (G.Render3D && G.Render3D.liberar) G.Render3D.liberar();
+        return;
+      }
       var esp = fila.shift();
       try { A.dataURL(esp.id, A.variacaoCanonica(esp)); } catch (e) { /* segue */ }
       setTimeout(passo, 0);
