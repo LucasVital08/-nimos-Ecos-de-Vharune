@@ -226,9 +226,10 @@ E qualquer `0` na cadeia zera tudo — é assim que imunidade funciona.
 }
 ```
 
-O campo `art` é a instrução de desenho: arquétipo (`quadrupede`, `bipede`,
-`ameba`, `serpente`, `ave`…), três cores HSL e opções (crista, cauda, orelhas,
-patas, placas). **Não existe imagem.** Guarde esse campo — na Parte II ele vira
+O campo `art` é a instrução de construção: arquétipo (`quadrupede`, `bipede`,
+`ameba`, `aquatico`, `ave`, `golem`, `inseto`, `espectro`), três cores HSL e
+opções (crista, cauda, orelhas, patas, placas). É dele que sai a malha 3D do
+Ânimo, em `arte/especies3d.js`. **Não existe imagem nem modelo em arquivo.** Guarde esse campo — na Parte II ele vira
 o `semente` da certidão de nascimento on-chain.
 
 `cap` também reaparece na Parte II: é dele que sai a meta de oferta de cada
@@ -422,11 +423,86 @@ diferença, mas mantém o custo constante se o mapa crescer.
 
 Nenhum arquivo de imagem no repositório inteiro. Tudo é `<canvas>`.
 
-### Criaturas
+### Criaturas — malha 3D em tempo de execução
 
-Nove arquétipos (`quadrupede`, `bipede`, `ameba`, `serpente`, `ave`, `inseto`,
-`felino`, `aquatico`, `etereo`). O desenho é por camadas: sombra → corpo →
-padrão → membros → cabeça → detalhes → olhos.
+Os Ânimos **não são desenho**: são modelo. Cada retrato constrói uma malha
+(vértices, triângulos, normais) e a rasteriza num rasterizador escrito à mão em
+JavaScript — sem WebGL, sem build, sem asset. Quatro arquivos:
+
+| Arquivo | Papel |
+|---|---|
+| `arte/malha3d.js` | geometria: loft por spline, retalho paramétrico, faceta, esfera, ponta curva |
+| `arte/render3d.js` | rasterizador: câmera, z-buffer, mapa de sombra, G-buffer, AO, materiais |
+| `arte/anatomia3d.js` | vocabulário anatômico: coluna, crânio, olho, membro, asa, crista |
+| `arte/especies3d.js` | oito arquétipos corporais e o perfil 3D das 28 espécies |
+
+**Por que um rasterizador próprio e não WebGL.** O jogo precisa entregar um
+**PNG por indivíduo** — para o bestiário, para a ficha e para o token da
+carteira. Canvas 2D já dá isso de graça (`toDataURL`), sem contexto de GPU para
+criar, perder e restaurar, e sem risco de o navegador negar o contexto.
+
+**O pipeline, na ordem.**
+
+1. **Transformação** — vértice para espaço de vista e para tela, guardando
+   `1/w` para interpolação com correção de perspectiva.
+2. **Mapa de sombra** — passada só de profundidade a partir da luz principal,
+   ortográfica. É o que faz a asa escurecer o dorso de verdade.
+3. **G-buffer** — normal, uv, material e profundidade por pixel. Sombreamento
+   diferido: nenhum pixel é sombreado duas vezes, mesmo com muita sobreposição.
+4. **Oclusão em espaço de tela** — lida do próprio buffer de profundidade;
+   fecha dobra, vão sob a mandíbula e espaço entre as pernas.
+5. **Sombreamento** — relevo procedural perturba a normal, e só então entram
+   difusa, especular, luar de borda e rebote frio do chão.
+6. **Translúcidos** — membrana, geleia, névoa e véu, ordenados de trás para a
+   frente, testando profundidade sem gravá-la.
+7. **Resolução** — renderiza em 2× e reduz por caixa; cai para 1× sozinho se o
+   primeiro retrato passar de 320 ms.
+8. **Florescer** — difunde só o canal emissivo, a 1/4 da resolução.
+
+**Relevo sem geometria.** Escama, placa ventral, pena, quitina, rocha, cristal,
+metal e couro são **funções de altura** avaliadas por pixel em coordenadas de
+superfície, com derivada analítica; a derivada perturba a normal no plano
+tangente. Modelar escama vértice a vértice custaria centenas de milhares de
+triângulos por bicho; assim custa uma dúzia de multiplicações — e responde
+certo à luz, porque a normal é realmente perturbada.
+
+**As coordenadas de textura estão em distância de superfície**, não em [0,1]:
+`u` é o comprimento de arco ao longo da peça, `v` o perímetro percorrido. É o
+que faz a escama ter o mesmo tamanho no pescoço fino e no quadril largo, em vez
+de esticar junto com a peça.
+
+**A coluna é uma varredura só.** Da ponta da cauda até a nuca, sem emenda entre
+cauda, quadril, dorso e pescoço. Os marcos anatômicos caem em `t` previsível —
+quadril em 0.375, peito em 0.625, nuca em 1.0 — e é por isso que perna, asa e
+crista sabem onde se plantar sem coordenada mágica. Arquétipos com outra
+postura (bípede ereto, ave compacta, serpente marinha) trocam só a lista de
+pontos de controle; todo o resto continua valendo.
+
+> **Erro que isso custou:** a primeira versão dos quadros de referência
+> recalculava o "up" a cada estação. Em curva fechada — o S do pescoço — a
+> seção torcia, e a torção aparecia como fileira de escamas girando em volta
+> do pescoço. A correção foi transporte paralelo por dupla reflexão.
+
+> **Segundo erro, visível de longe:** as rêmiges da asa emplumada apontavam
+> para a frente, porque o ângulo de varredura foi escrito com o cosseno do lado
+> errado. O Falcéu virou um leque de espetos em volta do corpo. Asa de pena só
+> fecha superfície se a pena varre para TRÁS.
+
+**Escala entre espécies.** A câmera fica à mesma distância para todo o elenco e
+o fator de ampliação tem teto (`alturaRef`). Sem isso, o enquadramento
+automático encheria o quadro com qualquer bicho e o Pardalume de 30 cm sairia do
+tamanho do Vharuneth de 3,4 m — a diferença de porte que a arte 2D guardava na
+escala do desenho precisa sobreviver à mudança para 3D.
+
+**Efeitos.** Chama, raio, halo, névoa e faísca continuam em 2D, pintados por
+cima com as âncoras do modelo já projetadas na tela. Não é atalho: fogo e névoa
+não têm superfície, então modelá-los como malha custaria caro e ficaria pior.
+
+**Reserva.** `arte/criaturas.js` mantém o desenho 2D completo por camadas
+(sombra → corpo → padrão → membros → cabeça → detalhes → olhos) com a
+iluminação por normal map de `arte/luz.js`. Qualquer exceção no caminho 3D cai
+para ele — um bicho renderizado do jeito antigo é aceitável, um bicho a menos
+não é.
 
 O padrão individual é aplicado **só dentro da silhueta**, usando um canvas
 auxiliar:
