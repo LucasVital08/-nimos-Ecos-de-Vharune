@@ -77,6 +77,20 @@
     p.claro = U.tom(p.c1, 16, -4);
     p.escuro = U.tom(p.c1, -16, 4);
     p.linha = [p.c1[0], U.clamp(p.c1[1] * 0.75, 0, 100), 13];
+
+    /* --- iluminação lunar ---------------------------------------------
+       Estes bichos desceram de Orva. A leitura de "luar" vem de três cores
+       que não existem na paleta da espécie:
+         rim   — luz de borda fria, quase branca, na quina virada para a lua
+         prof  — sombra profunda puxada para o violeta (sombra preta mata a
+                 sensação de noite; violeta é o que o olho espera no escuro)
+         subs  — brilho interno, o éter que os atravessa por dentro       */
+    p.rim = [U.clamp(p.c1[0] * 0.25 + 205 * 0.75, 0, 360), 62, 88];
+    p.prof = [(p.c1[0] + 268) / 2, U.clamp(p.c1[1] * 0.6 + 12, 0, 100), 14];
+    p.subs = [p.c1[0], U.clamp(p.c1[1] + 14, 0, 100), U.clamp(p.c1[2] + 26, 0, 92)];
+    p.escamaCl = U.tom(p.c1, 22, -8);
+    p.escamaEs = U.tom(p.c1, -22, 7);
+
     p.CL = U.css(p.claro);
     p.C1 = U.css(p.c1);
     p.C2 = U.css(p.c2);
@@ -84,7 +98,243 @@
     p.CE = U.css(p.escuro);
     p.LN = U.css(p.linha);
     p.OL = U.css(p.olho);
+    p.RIM = U.css(p.rim);
+    p.PROF = U.css(p.prof);
     return p;
+  }
+
+  /* ===================== VOLUME, ESCAMAS E LUAR ======================== */
+
+  /* Campo de escamas recortado pela silhueta. Fileiras alternadas, cada
+     escama é um arco voltado para baixo — é a borda dela que o olho lê. */
+  function escamas(ctx, P, cx, cy, rx, ry, rnd, densidade) {
+    var passo = U.clamp(rx * (densidade || 0.22), 4.2, 11);
+    var linha = passo * 0.60;
+    var y, x, fila = 0;
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (y = cy - ry * 1.05; y < cy + ry * 1.05; y += linha, fila++) {
+      var desloc = (fila % 2) ? passo * 0.5 : 0;
+      for (x = cx - rx * 1.15; x < cx + rx * 1.15; x += passo) {
+        var t = (y - (cy - ry)) / (2 * ry);              /* 0 topo, 1 base */
+        ctx.beginPath();
+        ctx.arc(x + desloc, y, passo * 0.54, Math.PI * 0.12, Math.PI * 0.88);
+        ctx.lineWidth = 1.05;
+        ctx.strokeStyle = U.css(P.escamaEs, 0.20 + t * 0.16);
+        ctx.stroke();
+        /* fio de luz na aresta de cima da escama */
+        ctx.beginPath();
+        ctx.arc(x + desloc, y - 0.9, passo * 0.54, Math.PI * 0.22, Math.PI * 0.78);
+        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = U.css(P.escamaCl, 0.22 - t * 0.10);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+    void rnd;
+  }
+
+  /* Pinta uma forma com volume: gradiente de luar, escamas, brilho interno,
+     oclusão na base e luz de borda. `caminho` só desenha o contorno.
+     Todos os arquétipos passam por aqui — é o que dá unidade ao elenco. */
+  function volume(ctx, P, caminho, cx, cy, rx, ry, rnd, op) {
+    op = op || {};
+    var corBase = op.cor || P.c1;
+    var claro = U.tom(corBase, 18, -6);
+    var escuro = U.tom(corBase, -18, 5);
+
+    /* 1. corpo com gradiente diagonal — luz em cima à esquerda */
+    caminho();
+    var g = ctx.createLinearGradient(cx - rx * 0.85, cy - ry * 1.1, cx + rx * 0.75, cy + ry);
+    g.addColorStop(0, U.css(claro));
+    g.addColorStop(0.42, U.css(corBase));
+    g.addColorStop(1, U.css(escuro));
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    ctx.save();
+    caminho();
+    ctx.clip();
+
+    /* 2. escamas */
+    if (op.escamas !== false) escamas(ctx, P, cx, cy, rx, ry, rnd, op.densidade);
+
+    /* 3. o éter por dentro */
+    var gi = ctx.createRadialGradient(
+      cx - rx * 0.30, cy - ry * 0.42, rx * 0.05,
+      cx - rx * 0.30, cy - ry * 0.42, rx * 1.45);
+    gi.addColorStop(0, U.css(P.subs, 0.40));
+    gi.addColorStop(1, U.css(P.subs, 0));
+    ctx.fillStyle = gi;
+    ctx.fillRect(cx - rx * 2, cy - ry * 2, rx * 4, ry * 4);
+
+    /* 4. oclusão na barriga */
+    var go = ctx.createLinearGradient(0, cy + ry * 0.05, 0, cy + ry * 1.05);
+    go.addColorStop(0, U.css(P.prof, 0));
+    go.addColorStop(1, U.css(P.prof, 0.46));
+    ctx.fillStyle = go;
+    ctx.fillRect(cx - rx * 2, cy - ry * 2, rx * 4, ry * 4);
+
+    /* 5. luz de borda: traço grosso que o recorte corta ao meio, então só
+          a metade interna aparece — é assim que vira uma quina acesa. */
+    caminho();
+    var gr = ctx.createLinearGradient(cx + rx * 0.35, cy - ry * 1.05, cx - rx * 0.75, cy + ry * 0.85);
+    gr.addColorStop(0, U.css(P.rim, 0.92));
+    gr.addColorStop(0.5, U.css(P.rim, 0.18));
+    gr.addColorStop(1, U.css(P.rim, 0));
+    ctx.strokeStyle = gr;
+    ctx.lineWidth = 4.4;
+    ctx.stroke();
+    ctx.restore();
+
+    /* 6. contorno fino por fora, para não perder a silhueta no fundo escuro */
+    caminho();
+    ctx.strokeStyle = P.LN;
+    ctx.lineWidth = op.lw || 1.7;
+    ctx.stroke();
+  }
+
+  /* Fileira de espinhos ao longo da coluna. Dá leitura de dragão de perfil. */
+  function espinhosDorsais(ctx, P, x0, y0, x1, y1, n, alt) {
+    var i, t, px, py, h;
+    for (i = 0; i < n; i++) {
+      t = i / (n - 1 || 1);
+      px = x0 + (x1 - x0) * t;
+      py = y0 + (y1 - y0) * t;
+      h = alt * (0.45 + Math.sin(t * Math.PI) * 0.75);
+      poly(ctx, [[px - h * 0.34, py], [px + h * 0.30, py], [px - h * 0.05, py - h]]);
+      var g = ctx.createLinearGradient(px, py, px, py - h);
+      g.addColorStop(0, U.css(P.escuro));
+      g.addColorStop(1, U.css(P.rim, 0.85));
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.strokeStyle = P.LN;
+      ctx.lineWidth = 0.9;
+      ctx.stroke();
+    }
+  }
+
+  /* ======================= ANATOMIA DRACÔNICA ========================== */
+
+  /* Crânio com focinho, arcada e mandíbula — desenhado como UMA silhueta só,
+     para o volume() esculpir a peça inteira em vez de colar bolas.
+     É a diferença entre "bicho fofo" e "dragão". Olha para +x. */
+  function cabecaDraconica(ctx, P, cab, rnd, op) {
+    op = op || {};
+    var r = cab.r;
+    var foc = op.focinho === undefined ? 1 : op.focinho;   /* 0 = chato, 1.4 = lagarto */
+
+    var caminho = function () {
+      ctx.beginPath();
+      ctx.moveTo(cab.x - r * 0.92, cab.y + r * 0.32);
+      /* topo do crânio */
+      ctx.quadraticCurveTo(cab.x - r * 1.04, cab.y - r * 0.66, cab.x - r * 0.28, cab.y - r * 0.94);
+      /* arcada acima do olho */
+      ctx.quadraticCurveTo(cab.x + r * 0.26, cab.y - r * 1.06, cab.x + r * 0.60, cab.y - r * 0.66);
+      /* dorso do focinho */
+      ctx.quadraticCurveTo(cab.x + r * (0.55 + 0.75 * foc), cab.y - r * 0.50,
+                           cab.x + r * (0.72 + 0.96 * foc), cab.y - r * 0.06);
+      /* ponta */
+      ctx.quadraticCurveTo(cab.x + r * (0.80 + 1.02 * foc), cab.y + r * 0.24,
+                           cab.x + r * (0.60 + 0.86 * foc), cab.y + r * 0.34);
+      /* lábio superior voltando */
+      ctx.quadraticCurveTo(cab.x + r * (0.40 + 0.55 * foc), cab.y + r * 0.44,
+                           cab.x + r * 0.70, cab.y + r * 0.62);
+      /* mandíbula */
+      ctx.quadraticCurveTo(cab.x + r * 0.18, cab.y + r * 0.98, cab.x - r * 0.44, cab.y + r * 0.86);
+      ctx.closePath();
+    };
+
+    volume(ctx, P, caminho, cab.x, cab.y, r * 1.15, r, rnd, { densidade: 0.30, lw: 1.6 });
+
+    ctx.save();
+    caminho();
+    ctx.clip();
+
+    /* arcada superciliar — a saliência que dá olhar de predador */
+    ctx.beginPath();
+    ctx.moveTo(cab.x - r * 0.10, cab.y - r * 0.62);
+    ctx.quadraticCurveTo(cab.x + r * 0.40, cab.y - r * 0.86, cab.x + r * 0.66, cab.y - r * 0.48);
+    ctx.quadraticCurveTo(cab.x + r * 0.30, cab.y - r * 0.54, cab.x - r * 0.10, cab.y - r * 0.40);
+    ctx.closePath();
+    ctx.fillStyle = U.css(P.escuro, 0.45);
+    ctx.fill();
+
+    /* linha da boca */
+    ctx.beginPath();
+    ctx.moveTo(cab.x - r * 0.30, cab.y + r * 0.50);
+    ctx.quadraticCurveTo(cab.x + r * 0.30, cab.y + r * 0.52,
+                         cab.x + r * (0.58 + 0.84 * foc), cab.y + r * 0.32);
+    ctx.strokeStyle = U.css(P.linha, 0.65);
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    /* sombra sob a mandíbula */
+    var gj = ctx.createLinearGradient(0, cab.y + r * 0.30, 0, cab.y + r * 1.0);
+    gj.addColorStop(0, U.css(P.prof, 0));
+    gj.addColorStop(1, U.css(P.prof, 0.5));
+    ctx.fillStyle = gj;
+    ctx.fillRect(cab.x - r * 2, cab.y, r * 4, r * 2);
+    ctx.restore();
+
+    /* narina */
+    el(ctx, cab.x + r * (0.55 + 0.80 * foc), cab.y - r * 0.02, r * 0.11, r * 0.08, -0.3);
+    pintar(ctx, U.css(P.prof, 0.85), null);
+  }
+
+  /* Pescoço tronco-cônico ligando corpo e cabeça. Sem ele a cabeça parece
+     colada; com ele o bicho ganha porte. */
+  function pescoco(ctx, P, de, para, largBase, largTopo, rnd) {
+    var ang = Math.atan2(para.y - de.y, para.x - de.x);
+    var nx = Math.cos(ang + Math.PI / 2), ny = Math.sin(ang + Math.PI / 2);
+    var caminho = function () {
+      ctx.beginPath();
+      ctx.moveTo(de.x + nx * largBase, de.y + ny * largBase);
+      ctx.quadraticCurveTo(
+        (de.x + para.x) / 2 + nx * largTopo * 1.5,
+        (de.y + para.y) / 2 + ny * largTopo * 1.5,
+        para.x + nx * largTopo, para.y + ny * largTopo);
+      ctx.lineTo(para.x - nx * largTopo, para.y - ny * largTopo);
+      ctx.quadraticCurveTo(
+        (de.x + para.x) / 2 - nx * largBase * 0.7,
+        (de.y + para.y) / 2 - ny * largBase * 0.7,
+        de.x - nx * largBase, de.y - ny * largBase);
+      ctx.closePath();
+    };
+    volume(ctx, P, caminho, (de.x + para.x) / 2, (de.y + para.y) / 2,
+           largBase * 1.4, Math.abs(para.y - de.y) * 0.6 + largBase, rnd,
+           { densidade: 0.34, lw: 1.4 });
+  }
+
+  /* Perna digitígrada com garras. Substitui o retângulo arredondado. */
+  function perna(ctx, P, x, y, larg, alt, rnd, traseira) {
+    var flex = traseira ? -1 : 1;
+    var caminho = function () {
+      ctx.beginPath();
+      ctx.moveTo(x - larg * 0.5, y);
+      ctx.quadraticCurveTo(x - larg * 0.72, y + alt * 0.42,
+                           x - larg * 0.34 + flex * larg * 0.16, y + alt * 0.66);
+      ctx.quadraticCurveTo(x - larg * 0.2, y + alt * 0.92, x - larg * 0.62, y + alt);
+      ctx.lineTo(x + larg * 0.86, y + alt);
+      ctx.quadraticCurveTo(x + larg * 0.56, y + alt * 0.80,
+                           x + larg * 0.40 + flex * larg * 0.10, y + alt * 0.56);
+      ctx.quadraticCurveTo(x + larg * 0.62, y + alt * 0.26, x + larg * 0.5, y);
+      ctx.closePath();
+    };
+    volume(ctx, P, caminho, x, y + alt * 0.5, larg * 0.9, alt * 0.5, rnd,
+           { densidade: 0.42, lw: 1.4, cor: U.tom(P.c1, -12, 3) });
+
+    /* três garras */
+    for (var c = 0; c < 3; c++) {
+      var gx = x - larg * 0.42 + c * larg * 0.46;
+      poly(ctx, [[gx, y + alt], [gx + larg * 0.30, y + alt],
+                 [gx + larg * 0.20, y + alt + Math.max(2.6, larg * 0.34)]]);
+      var gg = ctx.createLinearGradient(gx, y + alt, gx, y + alt + larg * 0.34);
+      gg.addColorStop(0, U.css(P.escuro));
+      gg.addColorStop(1, U.css(P.rim, 0.9));
+      ctx.fillStyle = gg;
+      ctx.fill();
+    }
   }
 
   /* ============================= PARTES ================================ */
@@ -92,34 +342,89 @@
   function desenharOlhos(ctx, P, o, cab, rnd) {
     var tipo = o.olhos || 'redondo';
     var r = cab.r;
-    var ox = cab.x + r * 0.34, oy = cab.y - r * 0.10;
-    var ox2 = cab.x - r * 0.32, oy2 = cab.y - r * 0.04;
+    /* Num crânio com focinho o olho vai na ARCADA, não no meio da cara.
+       Arquétipos dracônicos passam cab.olhoY/olhoX para subir o par. */
+    var dx = cab.olhoX === undefined ? 0.34 : cab.olhoX;
+    var dy = cab.olhoY === undefined ? -0.10 : cab.olhoY;
+    var ox = cab.x + r * dx, oy = cab.y + r * dy;
+    var ox2 = cab.x - r * 0.32, oy2 = cab.y + r * (dy + 0.06);
+
+    /* A íris é um gradiente radial: escura na borda, acesa no fundo. Junto
+       com o halo e o reflexo branco fora de centro, é o que tira o olho da
+       aparência de adesivo e dá um olhar de verdade. */
+    function iris(x, y, rrx, rry, rot) {
+      var g = ctx.createRadialGradient(x - rrx * 0.25, y - rry * 0.3, rrx * 0.05, x, y, rrx * 1.15);
+      g.addColorStop(0, U.css(U.tom(P.olho, 30, -6)));
+      g.addColorStop(0.6, P.OL);
+      g.addColorStop(1, U.css(U.tom(P.olho, -30, 10)));
+      el(ctx, x, y, rrx, rry, rot || 0);
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    /* halo do olho aceso, para leitura à distância */
+    function halo(x, y, rr) {
+      var g = ctx.createRadialGradient(x, y, rr * 0.2, x, y, rr * 2.6);
+      g.addColorStop(0, U.css(P.olho, 0.5));
+      g.addColorStop(1, U.css(P.olho, 0));
+      ctx.beginPath();
+      ctx.arc(x, y, rr * 2.6, 0, Math.PI * 2);
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    function reflexos(x, y, rr) {
+      el(ctx, x - rr * 0.32, y - rr * 0.42, rr * 0.30, rr * 0.24, -0.5);
+      pintar(ctx, 'rgba(255,255,255,0.95)', null);
+      el(ctx, x + rr * 0.30, y + rr * 0.34, rr * 0.15, rr * 0.12, 0.3);
+      pintar(ctx, U.css(P.rim, 0.6), null);
+    }
 
     function globo(x, y, rr, forma) {
       if (forma === 'fenda') {
-        el(ctx, x, y, rr * 1.05, rr * 1.15, 0); pintar(ctx, P.OL, P.LN, 1.6);
-        el(ctx, x, y, rr * 0.30, rr * 0.95, 0); pintar(ctx, '#12101a', null);
+        halo(x, y, rr);
+        iris(x, y, rr * 1.08, rr * 1.2, 0);
+        el(ctx, x, y, rr * 1.08, rr * 1.2, 0);
+        ctx.strokeStyle = P.LN; ctx.lineWidth = 1.3; ctx.stroke();
+        el(ctx, x, y, rr * 0.26, rr * 0.98, 0); pintar(ctx, '#0d0b14', null);
+        reflexos(x, y, rr);
       } else if (forma === 'brilho') {
+        halo(x, y, rr * 1.3);
         ctx.save();
-        ctx.shadowColor = P.OL; ctx.shadowBlur = 8;
-        el(ctx, x, y, rr * 1.05, rr * 1.05, 0); pintar(ctx, P.OL, null);
+        ctx.shadowColor = P.OL; ctx.shadowBlur = 10;
+        iris(x, y, rr * 1.05, rr * 1.05, 0);
         ctx.restore();
-        el(ctx, x, y, rr * 0.45, rr * 0.45, 0); pintar(ctx, '#ffffff', null);
+        el(ctx, x, y, rr * 0.40, rr * 0.40, 0); pintar(ctx, '#ffffff', null);
       } else if (forma === 'composto') {
-        el(ctx, x, y, rr * 1.25, rr * 1.05, -0.25); pintar(ctx, U.css(P.olho, 0.95), P.LN, 1.6);
-        ctx.save(); ctx.globalAlpha = 0.35;
+        halo(x, y, rr);
+        iris(x, y, rr * 1.28, rr * 1.06, -0.25);
+        el(ctx, x, y, rr * 1.28, rr * 1.06, -0.25);
+        ctx.strokeStyle = P.LN; ctx.lineWidth = 1.3; ctx.stroke();
+        ctx.save(); ctx.globalAlpha = 0.30;
         for (var i = -1; i <= 1; i++) {
-          el(ctx, x + i * rr * 0.5, y, rr * 0.22, rr * 0.85, -0.25); pintar(ctx, '#ffffff', null);
+          el(ctx, x + i * rr * 0.5, y, rr * 0.20, rr * 0.86, -0.25); pintar(ctx, '#ffffff', null);
         }
         ctx.restore();
+        reflexos(x, y, rr);
       } else if (forma === 'felino') {
-        el(ctx, x, y, rr * 1.1, rr * 1.0, -0.18); pintar(ctx, '#f7f4ee', P.LN, 1.6);
-        el(ctx, x + rr * 0.08, y, rr * 0.32, rr * 0.82, 0); pintar(ctx, '#151220', null);
-        el(ctx, x - rr * 0.2, y - rr * 0.3, rr * 0.2, rr * 0.2, 0); pintar(ctx, '#ffffff', null);
+        halo(x, y, rr * 0.8);
+        iris(x, y, rr * 1.12, rr * 1.02, -0.18);
+        el(ctx, x, y, rr * 1.12, rr * 1.02, -0.18);
+        ctx.strokeStyle = P.LN; ctx.lineWidth = 1.4; ctx.stroke();
+        el(ctx, x + rr * 0.06, y, rr * 0.28, rr * 0.86, 0); pintar(ctx, '#0d0b14', null);
+        reflexos(x, y, rr);
       } else {
-        el(ctx, x, y, rr, rr * 1.06, 0); pintar(ctx, '#f7f4ee', P.LN, 1.6);
-        el(ctx, x + rr * 0.12, y + rr * 0.05, rr * 0.5, rr * 0.5, 0); pintar(ctx, '#151220', null);
-        el(ctx, x - rr * 0.15, y - rr * 0.3, rr * 0.22, rr * 0.22, 0); pintar(ctx, '#ffffff', null);
+        /* redondo: esclera clara, íris colorida por cima, pupila e reflexo */
+        el(ctx, x, y, rr * 1.04, rr * 1.10, 0);
+        var ge = ctx.createLinearGradient(x, y - rr, x, y + rr);
+        ge.addColorStop(0, '#ffffff');
+        ge.addColorStop(1, '#cfc9dc');
+        ctx.fillStyle = ge; ctx.fill();
+        ctx.strokeStyle = P.LN; ctx.lineWidth = 1.4; ctx.stroke();
+        iris(x + rr * 0.10, y + rr * 0.04, rr * 0.62, rr * 0.62, 0);
+        el(ctx, x + rr * 0.10, y + rr * 0.04, rr * 0.30, rr * 0.30, 0);
+        pintar(ctx, '#0d0b14', null);
+        reflexos(x + rr * 0.10, y + rr * 0.04, rr * 0.8);
       }
     }
 
@@ -208,15 +513,54 @@
         ctx.restore();
       }
     } else if (t === 'chifres') {
+      /* Chifre de queratina: base escura, ponta clara, e anéis de
+         crescimento atravessando. São os anéis que vendem o material. */
       for (i = -1; i <= 1; i += 2) {
-        ctx.beginPath();
-        ctx.moveTo(cab.x + i * cab.r * 0.52, cab.y - cab.r * 0.62);
-        ctx.quadraticCurveTo(cab.x + i * cab.r * 1.15, cab.y - cab.r * 1.15,
-                             cab.x + i * cab.r * 0.72, cab.y - cab.r * 1.55);
-        ctx.quadraticCurveTo(cab.x + i * cab.r * 0.62, cab.y - cab.r * 1.0,
-                             cab.x + i * cab.r * 0.28, cab.y - cab.r * 0.66);
-        ctx.closePath();
-        pintar(ctx, P.C3, P.LN, 1.8);
+        var baseX = cab.x + i * cab.r * 0.52, baseY = cab.y - cab.r * 0.62;
+        var pontaX = cab.x + i * cab.r * 0.78, pontaY = cab.y - cab.r * 1.62;
+
+        var lado = i;
+        var caminhoChifre = function () {
+          ctx.beginPath();
+          ctx.moveTo(baseX, baseY);
+          ctx.quadraticCurveTo(cab.x + lado * cab.r * 1.22, cab.y - cab.r * 1.12, pontaX, pontaY);
+          ctx.quadraticCurveTo(cab.x + lado * cab.r * 0.60, cab.y - cab.r * 1.02,
+                               cab.x + lado * cab.r * 0.26, cab.y - cab.r * 0.66);
+          ctx.closePath();
+        };
+
+        caminhoChifre();
+        var gc = ctx.createLinearGradient(baseX, baseY, pontaX, pontaY);
+        gc.addColorStop(0, U.css(U.tom(P.c3, -26, 6)));
+        gc.addColorStop(0.55, P.C3);
+        gc.addColorStop(1, U.css(U.tom(P.c3, 30, -10)));
+        ctx.fillStyle = gc;
+        ctx.fill();
+
+        ctx.save();
+        caminhoChifre();
+        ctx.clip();
+        for (var k = 1; k <= 5; k++) {
+          var tt = k / 6;
+          var ax = baseX + (pontaX - baseX) * tt, ay = baseY + (pontaY - baseY) * tt;
+          ctx.beginPath();
+          ctx.moveTo(ax - cab.r * 0.45, ay + cab.r * 0.10);
+          ctx.lineTo(ax + cab.r * 0.45, ay - cab.r * 0.06);
+          ctx.strokeStyle = U.css(P.linha, 0.35);
+          ctx.lineWidth = 1.1;
+          ctx.stroke();
+        }
+        /* luar na quina do chifre */
+        caminhoChifre();
+        ctx.strokeStyle = U.css(P.rim, 0.75);
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
+        ctx.restore();
+
+        caminhoChifre();
+        ctx.strokeStyle = P.LN;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
       }
     } else if (t === 'pena') {
       for (i = 0; i < 3; i++) {
@@ -388,14 +732,84 @@
         ctx.restore();
       }
     } else if (t === 'membrana') {
+      /* Asa de dragão: dedos ósseos e a membrana esticada entre eles, com o
+         luar atravessando o couro fino. A membrana sozinha lê como pano;
+         são os dedos e as arcadas entre eles que fazem virar asa. */
       ctx.save();
       ctx.translate(corpo.x - corpo.rx * 0.2, corpo.y - corpo.ry * 0.4);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.quadraticCurveTo(-corpo.rx * 1.2, -corpo.ry * 1.5, -corpo.rx * 1.7, -corpo.ry * 0.2);
-      ctx.quadraticCurveTo(-corpo.rx * 1.0, corpo.ry * 0.1, 0, corpo.ry * 0.5);
-      ctx.closePath();
-      pintar(ctx, U.css(P.c2, 0.92), P.LN, 2);
+      var env = corpo.rx * 1.75 * g, alt = corpo.ry * 1.55 * g;
+      var dedos = [
+        { x: -env * 0.30, y: -alt * 0.92 },
+        { x: -env * 0.66, y: -alt * 0.86 },
+        { x: -env * 0.92, y: -alt * 0.42 },
+        { x: -env * 0.98, y: alt * 0.06 }
+      ];
+
+      var caminhoAsa = function () {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-env * 0.42, -alt * 1.02, dedos[0].x, dedos[0].y);
+        for (var d = 1; d < dedos.length; d++) {
+          /* barriga da membrana entre um dedo e o próximo */
+          var mx = (dedos[d - 1].x + dedos[d].x) / 2;
+          var my = (dedos[d - 1].y + dedos[d].y) / 2 + alt * 0.26;
+          ctx.quadraticCurveTo(mx, my, dedos[d].x, dedos[d].y);
+        }
+        ctx.quadraticCurveTo(-env * 0.50, alt * 0.42, 0, corpo.ry * 0.52);
+        ctx.closePath();
+      };
+
+      /* membrana com gradiente: mais opaca junto ao corpo, translúcida na ponta */
+      caminhoAsa();
+      var gm = ctx.createLinearGradient(0, 0, dedos[2].x, dedos[2].y);
+      gm.addColorStop(0, U.css(U.tom(P.c2, -14, 4), 0.96));
+      gm.addColorStop(0.62, U.css(P.c2, 0.80));
+      gm.addColorStop(1, U.css(U.tom(P.c2, 24, 8), 0.58));
+      ctx.fillStyle = gm;
+      ctx.fill();
+
+      ctx.save();
+      caminhoAsa();
+      ctx.clip();
+      /* veias */
+      for (var vI = 0; vI < dedos.length; vI++) {
+        ctx.beginPath();
+        ctx.moveTo(0, corpo.ry * 0.10);
+        ctx.quadraticCurveTo(dedos[vI].x * 0.55, dedos[vI].y * 0.45 + alt * 0.10,
+                             dedos[vI].x * 0.94, dedos[vI].y * 0.94);
+        ctx.strokeStyle = U.css(P.linha, 0.22);
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+      }
+      /* luar atravessando o couro */
+      caminhoAsa();
+      ctx.strokeStyle = U.css(P.rim, 0.55);
+      ctx.lineWidth = 3.4;
+      ctx.stroke();
+      ctx.restore();
+
+      /* dedos ósseos por cima */
+      for (var b = 0; b < dedos.length; b++) {
+        ctx.beginPath();
+        ctx.moveTo(0, corpo.ry * 0.06);
+        ctx.quadraticCurveTo(dedos[b].x * 0.52, dedos[b].y * 0.42,
+                             dedos[b].x, dedos[b].y);
+        ctx.strokeStyle = U.css(U.tom(P.c1, -20, 6));
+        ctx.lineWidth = 2.6 - b * 0.35;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.strokeStyle = U.css(P.rim, 0.5);
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+        /* garra na ponta do dedo */
+        el(ctx, dedos[b].x, dedos[b].y, 1.9, 1.9, 0);
+        pintar(ctx, U.css(P.rim, 0.85), null);
+      }
+
+      caminhoAsa();
+      ctx.strokeStyle = P.LN;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
       ctx.restore();
     } else if (t === 'inseto') {
       ctx.save();
@@ -430,35 +844,70 @@
 
   /* ============================ ARQUÉTIPOS ============================= */
 
+  /* Sombra de contato: escura e fechada embaixo do bicho, aberta e fraca
+     nas pontas. Um disco de alfa constante faz o bicho parecer adesivo. */
   function sombra(ctx, cx, cy, rx) {
-    el(ctx, cx, cy, rx, rx * 0.26, 0);
-    ctx.fillStyle = 'rgba(20,16,30,0.22)';
+    var g = ctx.createRadialGradient(cx, cy, rx * 0.08, cx, cy, rx);
+    g.addColorStop(0, 'rgba(14,10,26,0.42)');
+    g.addColorStop(0.55, 'rgba(14,10,26,0.20)');
+    g.addColorStop(1, 'rgba(14,10,26,0)');
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(1, 0.28);
+    ctx.beginPath();
+    ctx.arc(0, 0, rx, 0, Math.PI * 2);
+    ctx.fillStyle = g;
     ctx.fill();
+    ctx.restore();
   }
 
   function corpoBase(ctx, P, x, y, rx, ry, rnd, ondas) {
-    blob(ctx, x, y, rx, ry, ondas || 3, rnd() * 6, rnd);
-    pintar(ctx, P.C1, P.LN, 2.4);
-    ctx.save();
-    ctx.clip();
-    el(ctx, x - rx * 0.3, y - ry * 0.45, rx * 0.7, ry * 0.45, -0.3);
-    pintar(ctx, U.css(P.claro, 0.55), null);
-    el(ctx, x + rx * 0.15, y + ry * 0.55, rx * 0.85, ry * 0.5, 0);
-    pintar(ctx, U.css(P.escuro, 0.4), null);
-    ctx.restore();
+    /* `amp` fixa a silhueta: o caminho é redesenhado várias vezes dentro de
+       volume() e precisa sair idêntico em todas. */
+    var amp = rnd() * 6;
+    volume(ctx, P, function () {
+      blob(ctx, x, y, rx, ry, ondas || 3, amp);
+    }, x, y, rx, ry, rnd, { lw: 1.9 });
   }
 
   var ARQ = {};
 
+  /* Tronco de fera: peito fundo na frente, quadril mais estreito atrás e
+     linha do dorso descendo até a cauda. Um oval simétrico lê como brinquedo;
+     esta assimetria é o que dá direção e peso ao bicho. */
+  function tronco(ctx, P, cx, cy, rx, ry, rnd) {
+    var caminho = function () {
+      ctx.beginPath();
+      ctx.moveTo(cx + rx * 0.92, cy - ry * 0.46);                       /* base do pescoço */
+      ctx.quadraticCurveTo(cx + rx * 0.34, cy - ry * 0.98, cx - rx * 0.30, cy - ry * 0.86); /* dorso */
+      ctx.quadraticCurveTo(cx - rx * 0.88, cy - ry * 0.74, cx - rx * 0.98, cy - ry * 0.06); /* garupa */
+      ctx.quadraticCurveTo(cx - rx * 1.02, cy + ry * 0.58, cx - rx * 0.48, cy + ry * 0.78); /* coxa */
+      ctx.quadraticCurveTo(cx + rx * 0.22, cy + ry * 0.90, cx + rx * 0.78, cy + ry * 0.58); /* barriga */
+      ctx.quadraticCurveTo(cx + rx * 1.06, cy + ry * 0.34, cx + rx * 1.00, cy - ry * 0.14); /* peito */
+      ctx.closePath();
+    };
+    volume(ctx, P, caminho, cx, cy, rx, ry, rnd, { lw: 1.9 });
+    return caminho;
+  }
+
   ARQ.quadrupede = function (ctx, P, o, rnd) {
-    var cx = 44, cy = 60, rx = o.corpoRX, ry = o.corpoRY;
-    var cab = { x: cx + rx * 0.92, y: cy - ry * 1.02, r: o.cabecaR };
-    sombra(ctx, 50, 92, rx * 1.15);
-    desenharCauda(ctx, P, o, { x: cx - rx * 0.92, y: cy - ry * 0.1 }, rnd);
-    /* patas traseiras */
-    pata(ctx, cx - rx * 0.55, cy + ry * 0.5, 8, 26, P.C2, P.LN);
-    pata(ctx, cx + rx * 0.42, cy + ry * 0.5, 8, 26, P.C2, P.LN);
-    corpoBase(ctx, P, cx, cy, rx, ry, rnd, 3);
+    var cx = 42, cy = 63, rx = o.corpoRX * 0.98, ry = o.corpoRY * 0.86;
+    var cab = { x: cx + rx * 1.30, y: cy - ry * 1.46, r: o.cabecaR * 1.12,
+                olhoX: 0.20, olhoY: -0.40 };
+    var ombro = { x: cx + rx * 0.84, y: cy - ry * 0.50 };
+    sombra(ctx, 50, 93, rx * 1.25);
+    desenharCauda(ctx, P, o, { x: cx - rx * 0.98, y: cy - ry * 0.05 }, rnd);
+    /* patas traseiras primeiro: ficam atrás do tronco */
+    perna(ctx, P, cx - rx * 0.62, cy + ry * 0.42, 8, 25, rnd, true);
+    perna(ctx, P, cx + rx * 0.34, cy + ry * 0.46, 8, 25, rnd, true);
+    tronco(ctx, P, cx, cy, rx, ry, rnd);
+    /* espinhos acompanhando a linha do dorso */
+    if (o.crista !== 'nenhuma' || o.placas) {
+      espinhosDorsais(ctx, P, cx - rx * 0.80, cy - ry * 0.86,
+                      cx + rx * 0.62, cy - ry * 0.92, 5, ry * 0.42);
+    }
+    pescoco(ctx, P, ombro, { x: cab.x - cab.r * 0.5, y: cab.y + cab.r * 0.55 },
+            ry * 0.52, cab.r * 0.46, rnd);
     if (o.placas) {
       for (var i = -1; i <= 1; i++) {
         el(ctx, cx + i * rx * 0.45, cy - ry * 0.55, rx * 0.22, ry * 0.30, 0);
@@ -467,9 +916,9 @@
     }
     if (o.dorso === 'arvore') {
       ctx.save();
-      el(ctx, cx - rx * 0.15, cy - ry * 1.35, rx * 0.62, ry * 0.55, 0);
+      el(ctx, cx - rx * 0.22, cy - ry * 1.02, rx * 0.56, ry * 0.46, 0);
       pintar(ctx, P.C3, P.LN, 2);
-      el(ctx, cx + rx * 0.35, cy - ry * 1.15, rx * 0.4, ry * 0.36, 0);
+      el(ctx, cx + rx * 0.24, cy - ry * 0.94, rx * 0.36, ry * 0.32, 0);
       pintar(ctx, U.css(U.tom(P.c3, 8)), P.LN, 1.8);
       ctx.restore();
     }
@@ -484,27 +933,21 @@
       }
       ctx.restore();
     }
-    /* patas dianteiras */
-    pata(ctx, cx - rx * 0.18, cy + ry * 0.62, 9, 26, P.C1, P.LN);
-    pata(ctx, cx + rx * 0.72, cy + ry * 0.58, 9, 26, P.C1, P.LN);
+    /* patas dianteiras por último: ficam na frente do tronco */
+    perna(ctx, P, cx + rx * 0.30, cy + ry * 0.58, 9, 26, rnd, false);
+    perna(ctx, P, cx + rx * 0.80, cy + ry * 0.54, 9, 26, rnd, false);
     desenharOrelhas(ctx, P, o, cab);
-    el(ctx, cab.x, cab.y, cab.r, cab.r * 0.95, 0);
-    pintar(ctx, P.C1, P.LN, 2.4);
-    ctx.save(); el(ctx, cab.x, cab.y, cab.r, cab.r * 0.95, 0); ctx.clip();
-    el(ctx, cab.x - cab.r * 0.3, cab.y - cab.r * 0.4, cab.r * 0.7, cab.r * 0.5, -0.3);
-    pintar(ctx, U.css(P.claro, 0.5), null);
-    ctx.restore();
-    el(ctx, cab.x + cab.r * 0.72, cab.y + cab.r * 0.3, cab.r * 0.42, cab.r * 0.32, 0);
-    pintar(ctx, P.CL, P.LN, 2);
+    cabecaDraconica(ctx, P, cab, rnd, { focinho: o.focinho });
     desenharCrista(ctx, P, o, cab, rnd);
     desenharOlhos(ctx, P, o, cab, rnd);
-    desenharBoca(ctx, P, o, { x: cab.x + cab.r * 0.5, y: cab.y + cab.r * 0.2, r: cab.r });
+    desenharBoca(ctx, P, o, { x: cab.x + cab.r * 0.86, y: cab.y + cab.r * 0.34, r: cab.r });
     return { cab: cab, corpo: { x: cx, y: cy, rx: rx, ry: ry } };
   };
 
   ARQ.bipede = function (ctx, P, o, rnd) {
     var cx = 48, cy = 58, rx = o.corpoRX, ry = o.corpoRY;
-    var cab = { x: cx + 5, y: cy - ry - o.cabecaR * 0.75, r: o.cabecaR };
+    var cab = { x: cx + 5, y: cy - ry - o.cabecaR * 0.75, r: o.cabecaR,
+                olhoX: 0.18, olhoY: -0.38 };
     sombra(ctx, 50, 93, rx * 1.25);
     desenharCauda(ctx, P, o, { x: cx - rx * 0.85, y: cy + ry * 0.55 }, rnd);
     if (o.capa) {
@@ -517,11 +960,29 @@
       pintar(ctx, U.css(P.c2, 0.95), P.LN, 2.2);
     }
     desenharAsas(ctx, P, o, { x: cx, y: cy - ry * 0.2, rx: rx, ry: ry * 0.7 }, true);
-    pata(ctx, cx - rx * 0.45, cy + ry * 0.75, 10, 22, P.C2, P.LN);
-    pata(ctx, cx + rx * 0.45, cy + ry * 0.75, 10, 22, P.C2, P.LN);
-    corpoBase(ctx, P, cx, cy, rx, ry, rnd, 2);
-    el(ctx, cx + 1, cy + ry * 0.25, rx * 0.55, ry * 0.5, 0);
-    pintar(ctx, U.css(P.claro, 0.7), null);
+    perna(ctx, P, cx - rx * 0.45, cy + ry * 0.72, 10, 23, rnd, true);
+    perna(ctx, P, cx + rx * 0.45, cy + ry * 0.72, 10, 23, rnd, false);
+    /* torso em pera: peito largo em cima, quadril estreito embaixo */
+    volume(ctx, P, function () {
+      ctx.beginPath();
+      ctx.moveTo(cx - rx * 0.72, cy - ry * 0.62);
+      ctx.quadraticCurveTo(cx, cy - ry * 1.10, cx + rx * 0.76, cy - ry * 0.58);
+      ctx.quadraticCurveTo(cx + rx * 1.02, cy + ry * 0.10, cx + rx * 0.72, cy + ry * 0.78);
+      ctx.quadraticCurveTo(cx, cy + ry * 1.04, cx - rx * 0.70, cy + ry * 0.76);
+      ctx.quadraticCurveTo(cx - rx * 0.98, cy + ry * 0.08, cx - rx * 0.72, cy - ry * 0.62);
+      ctx.closePath();
+    }, cx, cy, rx, ry, rnd, { lw: 1.9 });
+    /* placas do ventre — escamas maiores e mais claras, como barriga de réptil */
+    ctx.save();
+    el(ctx, cx + 1, cy + ry * 0.22, rx * 0.48, ry * 0.56, 0);
+    ctx.clip();
+    for (var pv = -3; pv <= 3; pv++) {
+      el(ctx, cx + 1, cy + ry * 0.22 + pv * ry * 0.17, rx * 0.46, ry * 0.075, 0);
+      pintar(ctx, U.css(P.claro, 0.42), U.css(P.linha, 0.25), 0.9);
+    }
+    ctx.restore();
+    espinhosDorsais(ctx, P, cx - rx * 0.30, cy - ry * 0.92,
+                    cx + rx * 0.34, cy - ry * 0.90, 4, ry * 0.34);
     /* braços */
     var i;
     for (i = -1; i <= 1; i += 2) {
@@ -539,15 +1000,13 @@
       ctx.restore();
     }
     desenharOrelhas(ctx, P, o, cab);
-    el(ctx, cab.x, cab.y, cab.r, cab.r, 0);
-    pintar(ctx, P.C1, P.LN, 2.4);
-    ctx.save(); el(ctx, cab.x, cab.y, cab.r, cab.r, 0); ctx.clip();
-    el(ctx, cab.x - cab.r * 0.3, cab.y - cab.r * 0.4, cab.r * 0.7, cab.r * 0.5, -0.3);
-    pintar(ctx, U.css(P.claro, 0.5), null);
-    ctx.restore();
+    pescoco(ctx, P, { x: cx + 2, y: cy - ry * 0.80 },
+            { x: cab.x - cab.r * 0.34, y: cab.y + cab.r * 0.62 },
+            ry * 0.34, cab.r * 0.44, rnd);
+    cabecaDraconica(ctx, P, cab, rnd, { focinho: o.focinho === undefined ? 0.72 : o.focinho });
     desenharCrista(ctx, P, o, cab, rnd);
     desenharOlhos(ctx, P, o, cab, rnd);
-    desenharBoca(ctx, P, o, cab);
+    desenharBoca(ctx, P, o, { x: cab.x + cab.r * 0.80, y: cab.y + cab.r * 0.34, r: cab.r });
     return { cab: cab, corpo: { x: cx, y: cy, rx: rx, ry: ry } };
   };
 
