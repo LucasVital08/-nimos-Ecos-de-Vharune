@@ -42,6 +42,8 @@
       },
       equipe: [],
       reserva: [],
+      /* regiões já pisadas — alimenta o mapa-múndi */
+      regioes: {},
       mochila: {
         selo_simples: 8,
         elixir_menor: 4,

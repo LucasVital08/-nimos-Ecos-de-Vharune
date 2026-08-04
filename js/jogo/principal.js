@@ -278,6 +278,7 @@
     });
 
     G.el('#btn-menu').addEventListener('click', function () { T.menuPrincipal(); });
+    G.el('#btn-mapa').addEventListener('click', function () { G.Telas.mapaMundi(); });
     G.el('#btn-b').addEventListener('click', function () { T.menuPrincipal(); });
     G.el('#btn-acao').addEventListener('click', function () {
       if (UI.dialogoAberto()) UI.avancarDialogo();

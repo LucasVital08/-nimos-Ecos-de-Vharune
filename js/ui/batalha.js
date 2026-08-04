@@ -26,6 +26,33 @@
     inimigo: { dx: 0, dy: 0, esc: 1, alpha: 1, tremor: 0, flash: 0, entrada: 0 }
   };
 
+  /* O motor aplica TODO o dano do turno de uma vez, ao montar a fila de
+     eventos. Se a barra lesse hpAtual direto do modelo, ela já mostraria o
+     resultado final antes de a animação tocar — inclusive o dano que o
+     adversário ainda vai causar. Por isso a barra tem um valor próprio:
+     `alvo` avança só quando o evento de dano é reproduzido, e `vis` corre
+     atrás dele suavemente no laço de animação. */
+  var hpBarra = {
+    aliado:  { vis: 0, alvo: 0, max: 1 },
+    inimigo: { vis: 0, alvo: 0, max: 1 }
+  };
+
+  /* Sincroniza a barra com o modelo — início de batalha, troca, cura fora
+     de turno. Sem transição: aqui o valor É o do modelo. */
+  function sincronizarHP(lado, imediato) {
+    var c = lado === 'aliado' ? b.aliado.c : b.inimigo.c;
+    var h = hpBarra[lado];
+    h.max = C.atributos(c).hp;
+    h.alvo = c.hpAtual;
+    if (imediato) h.vis = c.hpAtual;
+  }
+
+  function sincronizarTudo(imediato) {
+    if (!b) return;
+    sincronizarHP('aliado', imediato);
+    sincronizarHP('inimigo', imediato);
+  }
+
   UB.ativa = function () { return ativo; };
 
   /* ==================================================================== */
@@ -59,6 +86,7 @@
 
     aoTerminar = cfg.aoTerminar || null;
     ativo = true;
+    sincronizarTudo(true);   /* a barra parte do valor real do modelo */
     pendentes = { evolucoes: [], tecnicas: [] };
     selo = { ativo: false, prog: 0, tremores: 0, fase: '' };
     atores.aliado = { dx: 0, dy: 0, esc: 1, alpha: 1, tremor: 0, flash: 0, entrada: 0 };
@@ -287,6 +315,21 @@
     if (selo.ativo) {
       selo.prog += dt / (selo.fase === 'voo' ? 620 : 900);
     }
+
+    /* A barra desce/sobe suave até o alvo. A velocidade é proporcional ao
+       máximo para que um golpe pesado não leve o mesmo tempo que um arranhão. */
+    var mudou = false;
+    ['aliado', 'inimigo'].forEach(function (k) {
+      var h = hpBarra[k];
+      if (Math.abs(h.vis - h.alvo) < 0.05) {
+        if (h.vis !== h.alvo) { h.vis = h.alvo; mudou = true; }
+        return;
+      }
+      var vel = Math.max(h.max * 0.9, 14) * (dt / 1000);
+      h.vis += U.clamp(h.alvo - h.vis, -vel, vel);
+      mudou = true;
+    });
+    if (mudou) atualizarPlacas();
   }
 
   /* ==================================================================== */
@@ -299,13 +342,13 @@
 
     G.el('#bti-nome').textContent = C.nome(ai) + (ai.prismatico ? ' ✦' : '');
     G.el('#bti-nivel').textContent = 'Nv ' + ai.nivel;
-    barra('#bti-barra', C.fracaoHP(ai));
+    barra('#bti-barra', hpBarra.inimigo.vis / Math.max(1, hpBarra.inimigo.max));
     tags('#bti-tags', ai);
 
     G.el('#bta-nome').textContent = C.nome(aa);
     G.el('#bta-nivel').textContent = 'Nv ' + aa.nivel;
-    barra('#bta-barra', C.fracaoHP(aa));
-    G.el('#bta-hp').textContent = Math.ceil(aa.hpAtual) + ' / ' + atA.hp;
+    barra('#bta-barra', hpBarra.aliado.vis / Math.max(1, hpBarra.aliado.max));
+    G.el('#bta-hp').textContent = Math.ceil(Math.max(0, hpBarra.aliado.vis)) + ' / ' + atA.hp;
     G.el('#bta-xp').style.width = (C.progressoNivel(aa) * 100).toFixed(1) + '%';
     tags('#bta-tags', aa);
 
@@ -376,15 +419,19 @@
         var alvo = atores[ev.lado];
         alvo.tremor = 1;
         alvo.flash = 1;
-        atualizarPlacas();
+        /* só AQUI a barra recebe o golpe — junto com o tremor e o número */
+        var hd = hpBarra[ev.lado];
+        hd.alvo = Math.max(0, hd.alvo - ev.valor);
         flutuarNumero(ev.lado, '-' + ev.valor, '#ff8a6a');
         return 380;
       }
 
-      case 'cura':
-        atualizarPlacas();
+      case 'cura': {
+        var hc = hpBarra[ev.lado];
+        hc.alvo = Math.min(hc.max, hc.alvo + ev.valor);
         flutuarNumero(ev.lado, '+' + ev.valor, '#8ee6a4');
         return 340;
+      }
 
       case 'errou':
         return 260;
@@ -397,6 +444,7 @@
       case 'troca':
         atores.aliado.entrada = 0;
         atores.aliado.alpha = 1;
+        sincronizarTudo(true);
         atualizarPlacas();
         return 420;
 

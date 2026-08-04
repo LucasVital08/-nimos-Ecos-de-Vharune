@@ -662,3 +662,54 @@ textarea.saida{
 @media (prefers-reduced-motion:reduce){
   .nav-foco{animation:none}
 }
+
+/* ========================= MAPA DE VHARUNE ============================ */
+.mapa-nota{color:var(--texto2);font-size:.9rem;margin-bottom:16px;line-height:1.5}
+.mapa-tabuleiro{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  position:relative;max-width:640px;margin:0 auto;
+}
+.mapa-linhas{
+  position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;
+}
+.mapa-linhas line{stroke:var(--borda2);stroke-width:3;stroke-dasharray:7 7;opacity:.7}
+.mapa-regiao{
+  position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:linear-gradient(165deg,var(--painel2),var(--painel));
+  border:1px solid var(--borda);border-radius:14px;padding:12px 10px 14px;
+  color:var(--texto);font-family:inherit;cursor:pointer;
+  transition:transform .18s cubic-bezier(.2,.9,.3,1.2),border-color .18s,box-shadow .18s;
+}
+.mapa-regiao:hover{transform:translateY(-4px);border-color:var(--borda2)}
+.mapa-regiao strong{font-size:.92rem;text-align:center;line-height:1.25}
+.mapa-regiao small{color:var(--texto3);font-size:.74rem;text-align:center}
+.mapa-mini{
+  width:100%;aspect-ratio:4/3;border-radius:9px;overflow:hidden;
+  border:1px solid var(--borda);background:#14121c;
+  display:grid;place-items:center;
+}
+.mapa-mini canvas{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+.mapa-interrog{font-size:2rem;color:var(--texto3);font-weight:800}
+.mapa-regiao.desconhecida{opacity:.45;filter:grayscale(.7)}
+.mapa-regiao.desconhecida:hover{transform:none}
+.mapa-regiao.aqui{
+  border-color:var(--ambar);
+  box-shadow:0 0 0 2px rgba(232,163,61,.3),0 10px 28px -10px rgba(232,163,61,.6);
+}
+.mapa-regiao.aqui small{color:var(--ambar2);font-weight:700}
+.mapa-pino{
+  position:absolute;top:-9px;right:-6px;font-size:1.1rem;color:var(--ambar2);
+  text-shadow:0 0 10px rgba(248,205,124,.9);animation:pinoPulsa 1.6s ease-in-out infinite;
+}
+@keyframes pinoPulsa{0%,100%{transform:translateY(0);opacity:.85}50%{transform:translateY(-3px);opacity:1}}
+.mapa-progresso{
+  text-align:center;color:var(--texto3);font-size:.85rem;margin-top:18px;
+  padding-top:14px;border-top:1px solid var(--borda);
+}
+@media (max-width:520px){
+  .mapa-tabuleiro{gap:9px}
+  .mapa-regiao{padding:8px 6px 10px}
+  .mapa-regiao strong{font-size:.78rem}
+  .mapa-regiao small{font-size:.66rem}
+}
+@media (prefers-reduced-motion:reduce){.mapa-pino{animation:none}}

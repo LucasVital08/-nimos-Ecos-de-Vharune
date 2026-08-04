@@ -342,6 +342,7 @@
     if (k === 'm' || k === 'escape') { ev.preventDefault(); G.Telas.menuPrincipal(); return true; }
     if (k === 'p') { ev.preventDefault(); G.Telas.equipe(); return true; }
     if (k === 'b') { ev.preventDefault(); G.Telas.bestiario(); return true; }
+    if (k === 't') { ev.preventDefault(); G.Telas.mapaMundi(); return true; }
     if (k === 'i') { ev.preventDefault(); G.Telas.mochila(); return true; }
     return false;
   };

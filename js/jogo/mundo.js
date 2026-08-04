@@ -83,6 +83,8 @@
     p.x = px; p.y = py; p.dir = dir || 'baixo';
     p.movendo = false; p.prog = 0;
     E.s.jogador.mapa = id;
+    if (!E.s.regioes) E.s.regioes = {};   /* saves antigos não tinham o campo */
+    E.s.regioes[id] = true;
     E.s.jogador.x = px;
     E.s.jogador.y = py;
     E.s.jogador.dir = p.dir;

@@ -28,6 +28,7 @@
           var grade = G.criar('div', 'grade-menu');
           var itens = [
             { n: 'Equipe', d: 'Atributos, técnicas, líder e cuidado', f: T.equipe, tecla: 'P' },
+            { n: 'Mapa de Vharune', d: 'Todas as regiões e por onde se liga', f: T.mapaMundi, tecla: 'T' },
             { n: 'Bestiário', d: 'Ânimos vistos e capturados', f: T.bestiario, tecla: 'B' },
             { n: 'Mochila', d: 'Selos, elixires, alimentos e cuidado', f: T.mochila, tecla: 'I' },
             { n: 'Vinculista', d: 'Seu progresso em Vharune', f: T.perfil, tecla: '' },
@@ -586,6 +587,135 @@
   /* ==================================================================== */
   /*  BESTIÁRIO                                                           */
   /* ==================================================================== */
+
+  /* ==================================================================== */
+  /*  MAPA DE VHARUNE                                                     */
+  /* ==================================================================== */
+
+  /* Posição de cada região na rosa dos ventos, tirada das saídas reais dos
+     mapas: Cinzalva ao norte do Campo de Névoa, Bosque a oeste, Passo a
+     leste, Lago ao sul, e Aldherin depois do Passo. */
+  var GRADE_MUNDO = [
+    { id: 'cinzalva',        col: 1, lin: 0 },
+    { id: 'bosque_solene',   col: 0, lin: 1 },
+    { id: 'campo_nevoa',     col: 1, lin: 1 },
+    { id: 'passo_ferrugem',  col: 2, lin: 1 },
+    { id: 'lago_miravel',    col: 1, lin: 2 },
+    { id: 'ruinas_aldherin', col: 2, lin: 2 }
+  ];
+
+  /* Cor de cada tile na miniatura. O mapa pequeno é o mapa de verdade,
+     reduzido — não um desenho à parte que sairia do lugar. */
+  var COR_MINI = {
+    '.': '#4a8c46', ',': '#3d7a3a', 'F': '#5c9c50',
+    '-': '#8a6d43', '=': '#8b8697', 's': '#c8b083',
+    '~': '#2f6ea8', 'w': '#4d92c4', 'W': '#6fb0da',
+    'T': '#2c5c2e', 'Y': '#356b34', 'n': '#6b5535',
+    'R': '#77737f', 'M': '#5d5a67',
+    '#': '#9a8f83', 'B': '#b4675e', 'b': '#7d4a52', 'D': '#6b4a2c',
+    'P': '#8878b0', 't': '#6b5f8a', ':': '#7a68a8', 'x': '#6fe0d0',
+    'p': '#9c7645', 'G': '#a08050', 'f': '#8a7550', 'L': '#77707f',
+    'c': '#8a6a45', '_': '#14121c'
+  };
+
+  function miniaturaMapa(mapa, larguraAlvo) {
+    var esc = Math.max(2, Math.round(larguraAlvo / mapa.grade[0].length));
+    var cv = document.createElement('canvas');
+    cv.width = mapa.grade[0].length * esc;
+    cv.height = mapa.grade.length * esc;
+    var c = cv.getContext('2d');
+    for (var y = 0; y < mapa.grade.length; y++) {
+      var linha = mapa.grade[y];
+      for (var x = 0; x < linha.length; x++) {
+        c.fillStyle = COR_MINI[linha[x]] || '#3f7a3d';
+        c.fillRect(x * esc, y * esc, esc, esc);
+      }
+    }
+    return cv;
+  }
+
+  T.mapaMundi = function () {
+    UI.abrirPainel({
+      titulo: 'Mapa de Vharune',
+      abas: [{
+        id: 'mapa',
+        nome: 'Mapa',
+        render: function (corpo) {
+          var atual = E.s.jogador.mapa;
+          var vistos = E.s.regioes || {};
+
+          var nota = G.criar('p', 'mapa-nota',
+            'Regiões que você ainda não pisou aparecem apagadas. ' +
+            'As linhas mostram por onde dá para passar.');
+          corpo.appendChild(nota);
+
+          var tabuleiro = G.criar('div', 'mapa-tabuleiro');
+
+          /* ligações desenhadas atrás das cartas */
+          var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('class', 'mapa-linhas');
+          svg.setAttribute('viewBox', '0 0 300 300');
+          svg.setAttribute('preserveAspectRatio', 'none');
+          var ligacoes = [
+            [1, 0, 1, 1], [0, 1, 1, 1], [1, 1, 2, 1], [1, 1, 1, 2], [2, 1, 2, 2]
+          ];
+          ligacoes.forEach(function (l) {
+            var ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            ln.setAttribute('x1', l[0] * 100 + 50); ln.setAttribute('y1', l[1] * 100 + 50);
+            ln.setAttribute('x2', l[2] * 100 + 50); ln.setAttribute('y2', l[3] * 100 + 50);
+            svg.appendChild(ln);
+          });
+          tabuleiro.appendChild(svg);
+
+          GRADE_MUNDO.forEach(function (g) {
+            var mapa = G.mapa(g.id);
+            if (!mapa) return;
+            var visto = !!vistos[g.id];
+            var aqui = g.id === atual;
+
+            var carta = G.criar('button', 'mapa-regiao' +
+              (aqui ? ' aqui' : '') + (visto ? '' : ' desconhecida'));
+            carta.style.gridColumn = (g.col + 1);
+            carta.style.gridRow = (g.lin + 1);
+
+            var moldura = G.criar('div', 'mapa-mini');
+            if (visto) {
+              moldura.appendChild(miniaturaMapa(mapa, 132));
+            } else {
+              moldura.appendChild(G.criar('span', 'mapa-interrog', '?'));
+            }
+            carta.appendChild(moldura);
+
+            carta.appendChild(G.criar('strong', null, visto ? mapa.nome : 'Região desconhecida'));
+            carta.appendChild(G.criar('small', null, aqui ? 'Você está aqui'
+              : (visto ? rotuloAmbiente(mapa.ambiente) : 'Ainda não visitada')));
+
+            if (aqui) carta.appendChild(G.criar('span', 'mapa-pino', '◈'));
+
+            carta.addEventListener('click', function () {
+              if (!visto) { UI.toast('Você ainda não esteve lá.', 'aviso'); return; }
+              UI.toast(mapa.nome + ' — ' + rotuloAmbiente(mapa.ambiente), 'info');
+            });
+            tabuleiro.appendChild(carta);
+          });
+
+          corpo.appendChild(tabuleiro);
+
+          var conta = Object.keys(vistos).length;
+          corpo.appendChild(G.criar('p', 'mapa-progresso',
+            conta + ' de ' + GRADE_MUNDO.length + ' regiões descobertas'));
+        }
+      }]
+    });
+  };
+
+  function rotuloAmbiente(a) {
+    return ({
+      vila: 'Vila', campo: 'Campo aberto', floresta: 'Mata fechada',
+      lago: 'Lago', montanha: 'Montanha', ruinas: 'Ruínas'
+    })[a] || a;
+  }
+
   T.bestiario = function () {
     UI.abrirPainel({
       titulo: 'Bestiário de Vharune',
