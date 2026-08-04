@@ -12,9 +12,12 @@
   var A = G.Arte = G.Arte || {};
   var CACHE = {};
   var CACHE_ORDEM = [];
-  var CACHE_MAX = 220;
+  var CACHE_MAX = 80;
 
-  var LADO = 132;      /* px do canvas offscreen */
+  /* O canvas é ampliado em batalha, então renderizamos bem acima do tamanho
+     de exibição: a 132px tudo chegava borrado na tela. Cache menor porque
+     cada retrato agora pesa ~4x mais (256²×4B ≈ 260KB). */
+  var LADO = 256;      /* px do canvas offscreen */
   var ESC = LADO / 100; /* espaço lógico 100x100 */
 
   /* ------------------------------ helpers ----------------------------- */
@@ -1023,14 +1026,26 @@
     poly(ctx, [[cx - 10, 88], [cx + 0, 88], [cx - 4, 91]]); pintar(ctx, P.C3, P.LN, 1.2);
     poly(ctx, [[cx + 3, 88], [cx + 13, 88], [cx + 9, 91]]); pintar(ctx, P.C3, P.LN, 1.2);
     corpoBase(ctx, P, cx, cy, rx, ry * 1.12, rnd, 2);
+    /* peito emplumado: escamas maiores e mais claras */
+    ctx.save();
     el(ctx, cx + rx * 0.25, cy + ry * 0.3, rx * 0.6, ry * 0.62, 0);
-    pintar(ctx, U.css(P.claro, 0.7), null);
+    ctx.clip();
+    for (var pl = -3; pl <= 3; pl++) {
+      el(ctx, cx + rx * 0.25, cy + ry * 0.3 + pl * ry * 0.20, rx * 0.56, ry * 0.10, 0);
+      pintar(ctx, U.css(P.claro, 0.42), U.css(P.linha, 0.22), 0.9);
+    }
+    ctx.restore();
+    espinhosDorsais(ctx, P, cx - rx * 0.55, cy - ry * 0.98,
+                    cx + rx * 0.42, cy - ry * 1.02, 4, ry * 0.34);
     desenharAsas(ctx, P, o, { x: cx + 4, y: cy, rx: rx, ry: ry }, false);
-    el(ctx, cab.x, cab.y, cab.r, cab.r, 0);
-    pintar(ctx, P.C1, P.LN, 2.4);
+    pescoco(ctx, P, { x: cx + rx * 0.55, y: cy - ry * 0.72 },
+            { x: cab.x - cab.r * 0.32, y: cab.y + cab.r * 0.58 },
+            ry * 0.34, cab.r * 0.42, rnd);
+    cab.olhoX = 0.16; cab.olhoY = -0.38;
+    cabecaDraconica(ctx, P, cab, rnd, { focinho: o.focinho === undefined ? 1.15 : o.focinho });
     if (o.halo) { desenharCrista(ctx, P, { crista: 'halo' }, cab, rnd); }
     desenharCrista(ctx, P, o, cab, rnd);
-    desenharBoca(ctx, P, o, cab);
+    desenharBoca(ctx, P, o, { x: cab.x + cab.r * 0.9, y: cab.y + cab.r * 0.34, r: cab.r });
     desenharOlhos(ctx, P, o, cab, rnd);
     return { cab: cab, corpo: { x: cx, y: cy, rx: rx, ry: ry } };
   };
@@ -1065,11 +1080,11 @@
     ctx.translate(cx + rx * 0.1, cy + ry * 0.5); ctx.rotate(0.5);
     el(ctx, 0, 0, rx * 0.34, ry * 0.2, 0); pintar(ctx, U.css(P.c3, 0.9), P.LN, 1.5);
     ctx.restore();
-    el(ctx, cab.x, cab.y, cab.r, cab.r * 0.94, 0);
-    pintar(ctx, P.C1, P.LN, 2.2);
     desenharOrelhas(ctx, P, o, cab);
+    cab.olhoX = 0.14; cab.olhoY = -0.36;
+    cabecaDraconica(ctx, P, cab, rnd, { focinho: o.focinho === undefined ? 1.3 : o.focinho });
     desenharOlhos(ctx, P, o, cab, rnd);
-    desenharBoca(ctx, P, o, cab);
+    desenharBoca(ctx, P, o, { x: cab.x + cab.r * 1.0, y: cab.y + cab.r * 0.32, r: cab.r });
     return { cab: cab, corpo: { x: cx, y: cy, rx: rx, ry: ry } };
   };
 
@@ -1084,12 +1099,34 @@
     ctx.bezierCurveTo(cx + rx * 0.55, cy - ry * 1.3, cx + rx * 1.15, cy - ry * 0.6, cx + rx, cy + ry * 0.85);
     ctx.quadraticCurveTo(cx, cy + ry * 1.2, cx - rx, cy + ry * 0.85);
     ctx.closePath();
-    pintar(ctx, U.css(P.c1, 0.95), P.LN, 2.4);
+    /* Geleia: o gradiente vai de translúcido na borda a denso no núcleo, e
+       a luz entra por cima. Preenchimento chapado lia como plástico. */
+    var gGel = ctx.createRadialGradient(
+      cx - rx * 0.30, cy - ry * 0.50, rx * 0.08,
+      cx, cy, rx * 1.25);
+    gGel.addColorStop(0, U.css(P.subs, 0.95));
+    gGel.addColorStop(0.45, U.css(P.c1, 0.88));
+    gGel.addColorStop(1, U.css(U.tom(P.c1, -18, -6), 0.72));
+    ctx.fillStyle = gGel;
+    ctx.fill();
+    ctx.strokeStyle = U.css(P.rim, 0.55);
+    ctx.lineWidth = 2.6;
+    ctx.stroke();
+    ctx.strokeStyle = P.LN;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
     ctx.save(); ctx.clip();
-    el(ctx, cx - rx * 0.35, cy - ry * 0.55, rx * 0.55, ry * 0.45, -0.35);
-    pintar(ctx, U.css(P.claro, 0.6), null);
-    el(ctx, cx + rx * 0.2, cy + ry * 0.6, rx * 0.8, ry * 0.5, 0);
-    pintar(ctx, U.css(P.c2, 0.5), null);
+    /* núcleo denso suspenso na geleia */
+    el(ctx, cx + rx * 0.06, cy + ry * 0.18, rx * 0.42, ry * 0.36, 0.2);
+    pintar(ctx, U.css(U.tom(P.c2, -8, -4), 0.55), null);
+    /* refração: faixa clara atravessando */
+    ctx.save();
+    ctx.rotate(-0.4);
+    el(ctx, (cx - rx * 0.3) * 0.92 - 8, (cy - ry * 0.5) * 0.92 + 22, rx * 0.62, ry * 0.16, 0);
+    pintar(ctx, U.css(P.rim, 0.35), null);
+    ctx.restore();
+    el(ctx, cx - rx * 0.35, cy - ry * 0.55, rx * 0.5, ry * 0.40, -0.35);
+    pintar(ctx, U.css(P.claro, 0.55), null);
     if (o.bolhas) {
       for (var i = 0; i < 5; i++) {
         el(ctx, cx - rx * 0.7 + rnd() * rx * 1.4, cy - ry * 0.6 + rnd() * ry * 1.4, 2 + rnd() * 3, 2 + rnd() * 3, 0);
@@ -1132,10 +1169,30 @@
     var cx = 50, cy = 62, rx = o.corpoRX, ry = o.corpoRY;
     var cab = { x: cx, y: cy - ry * 0.3, r: ry * 0.7 };
     sombra(ctx, 50, 93, rx * 1.1);
+    /* Rocha facetada: cada bloco recebe gradiente de luar, veio mineral e a
+       quina viva acesa. Chapado, o golem lia como caixa de papelão. */
     function bloco(x, y, w, h, cor, rot) {
-      ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0);
-      poly(ctx, [[-w / 2, -h / 2], [w / 2 - 3, -h / 2 - 2], [w / 2, h / 2], [-w / 2 + 2, h / 2 + 2]]);
-      pintar(ctx, cor, P.LN, 2.2);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot || 0);
+      var caminho = function () {
+        poly(ctx, [[-w / 2, -h / 2], [w / 2 - 3, -h / 2 - 2], [w / 2, h / 2], [-w / 2 + 2, h / 2 + 2]]);
+      };
+      volume(ctx, P, caminho, 0, 0, w / 2, h / 2, rnd,
+             { escamas: false, cor: cor === P.C2 ? U.tom(P.c1, -14, 4) : P.c1, lw: 1.8 });
+      /* veios de mineral */
+      ctx.save();
+      caminho();
+      ctx.clip();
+      for (var v = 0; v < 3; v++) {
+        ctx.beginPath();
+        ctx.moveTo(-w / 2, -h / 2 + h * (0.25 + v * 0.26));
+        ctx.lineTo(w / 2, -h / 2 + h * (0.16 + v * 0.28));
+        ctx.strokeStyle = U.css(P.linha, 0.22);
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+      }
+      ctx.restore();
       ctx.restore();
     }
     if (o.bracos) {
@@ -1143,15 +1200,6 @@
       bloco(cx + rx * 1.15, cy + ry * 0.15, rx * 0.5, ry * 0.95, P.C2, 0.15);
     }
     bloco(cx, cy, rx * 1.85, ry * 1.7, P.C1, 0);
-    ctx.save();
-    poly(ctx, [[cx - rx * 0.92, cy - ry * 0.85], [cx + rx * 0.92 - 3, cy - ry * 0.85 - 2],
-               [cx + rx * 0.92, cy + ry * 0.85], [cx - rx * 0.92 + 2, cy + ry * 0.85 + 2]]);
-    ctx.clip();
-    el(ctx, cx - rx * 0.5, cy - ry * 0.6, rx * 0.7, ry * 0.4, -0.2);
-    pintar(ctx, U.css(P.claro, 0.5), null);
-    el(ctx, cx + rx * 0.4, cy + ry * 0.7, rx * 0.9, ry * 0.55, 0);
-    pintar(ctx, U.css(P.escuro, 0.45), null);
-    ctx.restore();
     /* blocos secundários */
     if (o.blocos) {
       bloco(cx - rx * 0.72, cy - ry * 1.1, rx * 0.55, ry * 0.5, P.C2, -0.2);
@@ -1170,8 +1218,8 @@
     desenharCrista(ctx, P, o, { x: cx, y: cy - ry * 0.9, r: ry * 0.75 }, rnd);
     desenharOlhos(ctx, P, o, cab, rnd);
     /* pernas curtas */
-    pata(ctx, cx - rx * 0.5, cy + ry * 0.85, 11, 12, P.C2, P.LN);
-    pata(ctx, cx + rx * 0.5, cy + ry * 0.85, 11, 12, P.C2, P.LN);
+    perna(ctx, P, cx - rx * 0.5, cy + ry * 0.85, 11, 13, rnd, true);
+    perna(ctx, P, cx + rx * 0.5, cy + ry * 0.85, 11, 13, rnd, false);
     return { cab: cab, corpo: { x: cx, y: cy, rx: rx, ry: ry } };
   };
 
@@ -1193,7 +1241,11 @@
     ctx.restore();
     desenharAsas(ctx, P, o, { x: cx, y: cy - ry * 0.3, rx: rx, ry: ry }, true);
     /* segmentos */
-    el(ctx, cx - rx * 0.55, cy, rx * 0.62, ry * 0.92, 0); pintar(ctx, P.C2, P.LN, 2.2);
+    /* abdômen em quitina, com o mesmo tratamento de volume do resto */
+    volume(ctx, P, function () {
+      el(ctx, cx - rx * 0.55, cy, rx * 0.62, ry * 0.92, 0);
+    }, cx - rx * 0.55, cy, rx * 0.62, ry * 0.92, rnd,
+       { cor: U.tom(P.c1, -10, 3), densidade: 0.36, lw: 1.7 });
     corpoBase(ctx, P, cx + rx * 0.25, cy, rx * 0.85, ry, rnd, 2);
     if (o.placas) {
       for (var k = 0; k < 3; k++) {
@@ -1246,8 +1298,28 @@
     ctx.bezierCurveTo(cx + rx * 0.8, cy + ry * 1.1, cx + rx * 0.35, cy + ry * 0.85, cx + rx * 0.1, cy + ry * 1.35);
     ctx.bezierCurveTo(cx - rx * 0.2, cy + ry * 0.85, cx - rx * 0.7, cy + ry * 1.2, cx - rx, cy + ry * 0.35);
     ctx.closePath();
-    pintar(ctx, U.css(P.c1, 0.92), P.LN, 2.4);
+    /* Espectro não tem pele: é denso no núcleo e some na borda. Um alfa
+       constante fazia ele parecer um balão colorido. */
+    var gEsp = ctx.createRadialGradient(cx, cy - ry * 0.2, rx * 0.05, cx, cy, rx * 1.35);
+    gEsp.addColorStop(0, U.css(P.subs, 0.92));
+    gEsp.addColorStop(0.5, U.css(P.c1, 0.80));
+    gEsp.addColorStop(1, U.css(U.tom(P.c1, -12, -8), 0.30));
+    ctx.fillStyle = gEsp;
+    ctx.fill();
+    ctx.strokeStyle = U.css(P.rim, 0.60);
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
     ctx.save(); ctx.clip();
+    /* fiapos de névoa subindo por dentro */
+    for (var fw = 0; fw < 5; fw++) {
+      ctx.beginPath();
+      var fx = cx - rx * 0.7 + fw * rx * 0.35;
+      ctx.moveTo(fx, cy + ry * 1.1);
+      ctx.quadraticCurveTo(fx + rx * 0.18, cy, fx - rx * 0.10, cy - ry * 0.9);
+      ctx.strokeStyle = U.css(P.rim, 0.14);
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+    }
     el(ctx, cx - rx * 0.35, cy - ry * 0.5, rx * 0.6, ry * 0.5, -0.3);
     pintar(ctx, U.css(P.claro, 0.5), null);
     ctx.restore();
@@ -1433,11 +1505,25 @@
   };
 
   /* Devolve um data-URL (usado em <img> nas telas de UI) */
+  /* toDataURL() codifica PNG e é caro: com o canvas a 256px, redesenhar o
+     bestiário inteiro custava ~350ms só de codificação. O canvas já era
+     cacheado; a string não era. Agora as duas são. */
+  var CACHE_URL = {}, URL_ORDEM = [];
+
   A.dataURL = function (especieId, v) {
+    v = v || {};
+    var chave = especieId + '|' + (v.matiz | 0) + '|' + (v.padrao || 'liso') + '|' +
+                (v.porte || 1).toFixed(2) + '|' + (v.prismatico ? 1 : 0) + '|' + (v.seed | 0);
+    if (CACHE_URL[chave]) return CACHE_URL[chave];
     var cv = A.canvasCriatura(especieId, v);
-    return cv ? cv.toDataURL() : '';
+    if (!cv) return '';
+    var url = cv.toDataURL();
+    CACHE_URL[chave] = url;
+    URL_ORDEM.push(chave);
+    if (URL_ORDEM.length > CACHE_MAX) delete CACHE_URL[URL_ORDEM.shift()];
+    return url;
   };
 
-  A.limparCache = function () { CACHE = {}; CACHE_ORDEM = []; };
+  A.limparCache = function () { CACHE = {}; CACHE_ORDEM = []; CACHE_URL = {}; URL_ORDEM = []; };
 
 })(window.ANIMOS);

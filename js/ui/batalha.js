@@ -40,7 +40,9 @@
   /* Sincroniza a barra com o modelo — início de batalha, troca, cura fora
      de turno. Sem transição: aqui o valor É o do modelo. */
   function sincronizarHP(lado, imediato) {
-    var c = lado === 'aliado' ? b.aliado.c : b.inimigo.c;
+    var l = b && (lado === 'aliado' ? b.aliado : b.inimigo);
+    var c = l && l.c;
+    if (!c) return;               /* batalha ainda montando: nada a sincronizar */
     var h = hpBarra[lado];
     h.max = C.atributos(c).hp;
     h.alvo = c.hpAtual;
